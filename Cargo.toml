@@ -1,0 +1,8 @@
+[package]
+name = "col"
+version = "0.0.1"
+authors = ["Cassaundra <cass@cassaundra.io>"]
+edition = "2018"
+
+[dependencies]
+clap = "2.32.0"
