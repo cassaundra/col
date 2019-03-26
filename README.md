@@ -1,6 +1,25 @@
 # col
 
-`col` is an esoteric programming language inspired by the syntax of Befunge. It's written in columns, each with their own memory stack.
+`col` is an esoteric programming language inspired by classical architectural columns and the syntax of other esolangs like [Befunge](https://esolangs.org/wiki/Befunge) and [Brainfuck](https://esolangs.org/wiki/Brainfuck).
+
+Both the instructions and the memory stacks are written in columns, each with its own defined instruction set and runtime stack. Each column can pop and push to another column's stack. Below is a more visual representation of the this concept. The finite source code is written at base of the column, while the memory stack of each column spans the shaft (length).
+
+```
+ 5   5   5   5
+ 4   4   4   4
+ 3   3   3   3
+ 2   2   2   2
+ 1   1   1   1
+ 0   0   0   0
+--- --- --- --- ...
+ a   d   g   j
+ b   e   h   k
+ c   f   i   l
+```
+
+Because any column can modify another column's stack, there are really no assurances of immutability or privacy. In "traditional" programming, this would be terrifying, but it's an intentional design choice here. By not restricting the accessibility of memory *but* still defining clear associations between instruction sets and their memory, interesting solutions emerge. Furthermore, "functions" (instruction sets) may have memory that persists longer than a single call.
+
+`col` is not designed to to be a "good" programming language. It's nothing more than a fun experiment that encourages the programmer to break out of traditional habits and invent alternative ways of solving problems. I hope you enjoy playing around with it :)
 
 Once the specification is stable, I'll begin writing an interpreter in Rust.
 
@@ -26,8 +45,8 @@ Misc. points to organize:
 | `>` | Begin execution at the start of the column on the right. Wrap if need be.                                                        |
 | `<` | Begin execution at the start of the column on the left. Wrap if need be.                                                         |
 | `;` | Pop a value `a` and begin execution at the `a`th column.                                                                         |
-| `v` | Pop value `a` from the remote stack and push to the local stack.                                                                 |
-| `^` | Pop value `a` from the local stack and push to the remote stack.                                                                 |
+| `^` | Pop value `a` from the *local* stack and push to the *remote* stack.                                                             |
+| `v` | Pop value `a` from the *remote* stack and push to the *local* stack.                                                             |
 | `~` | Pop value `a` from the local stack and set the remote stack of index `a`.                                                        |
 | `!` | Pop a value from the local stack and do nothing.                                                                                 |
 | `\` | Swap the top two values on the local stack.                                                                                      |
