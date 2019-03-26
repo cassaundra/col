@@ -36,19 +36,6 @@ Once the specification is stable, I'll begin writing an interpreter in Rust.
 	- Dividing by zero results in zero being pushed to the local stack.
 	- Attempting to pop a value from an empty stack (whether it be local, remote, or user input) results in zero being pushed to the local stack.
 
-
-Misc. points to organize:
-- Use UTF-8.
-- Values are unsigned 8-bit integers.
-- Columns are represented horizontally, line-by-line, in the source.
-- Each column has a stack.
-- The program begin in the 0th column.
-- Instructions are executed top-to-bottom.
-- Each column uses the nth register for local memory.
-- The columns are organized conceptually a circle and wraps at either end. When using the `,` command, the column number is also wrapped through modular arithmetic. For example, in a length-5 grid, the 8th column is the same as the 3rd and the -2nd.
-- If a stack is empty and a pop operation is performed, zero is returned.
-- By default, the remote stack is the same as the local stack (so `^` and `v` do nothing)
-
 ### Instructions
 
 | Cmd | Description                                                                                                                      |
