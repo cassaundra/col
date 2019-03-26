@@ -25,7 +25,7 @@ Once the specification is stable, I'll begin writing an interpreter in Rust.
 
 ## Specification
 
-- `col` sources are UTF-8 plain text.
+- Sources should be written in UTF-8 plain text.
 - There are a finite number of columns, defined by the source. Each has a finite instruction set and a memory stack of no official max capacity (depends on implementation).
 - Lines (separated by line feeds) represent columns, where the line index maps to the column index (e.g. first line is column \#0).
 - Values are unsigned 8-bit integers. If a program accepts user input, it's interpreted as UTF-8 and translated into an unsigned 8-bit integer.
@@ -35,6 +35,7 @@ Once the specification is stable, I'll begin writing an interpreter in Rust.
 - If any operation cannot be performed, the value zero is used.
 	- Dividing by zero results in zero being pushed to the local stack.
 	- Attempting to pop a value from an empty stack (whether it be local, remote, or user input) results in zero being pushed to the local stack.
+- The defined remote stack of a column persists between executions.
 
 ### Instructions
 
@@ -50,6 +51,7 @@ Once the specification is stable, I'll begin writing an interpreter in Rust.
 | `!` | Pop a value from the local stack and do nothing.                                                                                 |
 | `\` | Swap the top two values on the local stack.                                                                                      |
 | `:` | Duplicate the top value of the local stack (peek + push).                                                                        |
+| `c` | Clear the local stack.                                                                                                           |
 |`0-9`| Push a number value to the stack (*not* the UTF-8 value of the digit).                                                           |
 | `?` | Pop `a` and only run the next instruction if `a` is not zero.                                                                    |
 | `+` | Pop values `a` and `b` and push the result of `a` plus `b`.                                                                      |
