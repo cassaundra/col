@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 // string mode toggle is here but chars interpreted there are not
 // ^ interpreter level
 pub enum Instruction {
@@ -53,4 +55,37 @@ pub enum Instruction {
 	OutputNumber,
 	/// Terminate the entire program.
 	Terminate
+}
+
+// might do this differently in the future
+fn parse_token(c: char) -> Option<Instruction> {
+	Some(match c {
+		'<' => Instruction::LeftIndex,
+		'>' => Instruction::RightIndex,
+		';' => Instruction::SetColumn,
+		'~' => Instruction::RemoteStack,
+		'^' => Instruction::MoveToRemote,
+		'v' => Instruction::MoveToLocal,
+		'&' => Instruction::Discard,
+		'\\' => Instruction::Swap,
+		':' => Instruction::Duplicate,
+		'c' => Instruction::Clear,
+		'0'..'9' => Instruction::PushValue(c.to_digit(10u32).unwrap() as u8),
+		'?' => Instruction::If,
+		'+' => Instruction::Add,
+		'-' => Instruction::Subtract,
+		'*' => Instruction::Multiply,
+		'/' => Instruction::Divide,
+		'%' => Instruction::Modulo,
+		'=' => Instruction::Equals,
+		'`' => Instruction::GreaterThan,
+		'!' => Instruction::Invert,
+		'"' => Instruction::StringMode,
+		'_' => Instruction::Input,
+		'|' => Instruction::Skip,
+		'$' => Instruction::OutputChar,
+		'#' => Instruction::OutputNumber,
+		'@' => Instruction::Terminate,
+		_ => return None
+	})
 }
