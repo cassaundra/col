@@ -1,7 +1,11 @@
 use std::ops::Range;
 
-// string mode toggle is here but chars interpreted there are not
-// ^ interpreter level
+#[derive(Debug)]
+pub struct Program {
+	asl: Vec<Instruction>
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Instruction {
 	/// Push the index of the column on the left onto the local stack
 	LeftIndex,
@@ -24,7 +28,7 @@ pub enum Instruction {
 	/// Clear the local stack.
 	Clear,
 	/// Push a value to the local stack.
-	PushValue(u8),
+	Value(u8),
 	/// Pop `a` and only execute the following instruction if `a` is not zero.
 	If,
 	/// Pop values `a` and `b` off the local stack and push the result of `b` plus `a`.
@@ -57,35 +61,68 @@ pub enum Instruction {
 	Terminate
 }
 
-// might do this differently in the future
-fn parse_token(c: char) -> Option<Instruction> {
-	Some(match c {
-		'<' => Instruction::LeftIndex,
-		'>' => Instruction::RightIndex,
-		';' => Instruction::SetColumn,
-		'~' => Instruction::RemoteStack,
-		'^' => Instruction::MoveToRemote,
-		'v' => Instruction::MoveToLocal,
-		'&' => Instruction::Discard,
-		'\\' => Instruction::Swap,
-		':' => Instruction::Duplicate,
-		'c' => Instruction::Clear,
-		'0'..'9' => Instruction::PushValue(c.to_digit(10u32).unwrap() as u8),
-		'?' => Instruction::If,
-		'+' => Instruction::Add,
-		'-' => Instruction::Subtract,
-		'*' => Instruction::Multiply,
-		'/' => Instruction::Divide,
-		'%' => Instruction::Modulo,
-		'=' => Instruction::Equals,
-		'`' => Instruction::GreaterThan,
-		'!' => Instruction::Invert,
-		'"' => Instruction::StringMode,
-		'_' => Instruction::Input,
-		'|' => Instruction::Skip,
-		'$' => Instruction::OutputChar,
-		'#' => Instruction::OutputNumber,
-		'@' => Instruction::Terminate,
-		_ => return None
-	})
+impl Program {
+	// TODO error/result
+	pub fn parse(source: &str) -> Program {
+		let mut asl = Vec::new();
+		let mut is_string_mode = false;
+		for c in source.chars() {
+			let instruction = Instruction::from_char(&c);
+
+			if is_string_mode {
+				if instruction == Some(Instruction::StringMode) {
+					is_string_mode = false;
+					continue;
+				}
+				asl.push(Instruction::Value(c as u8));
+				continue;
+			}
+
+			match instruction.unwrap() {
+				Instruction::StringMode => {
+					is_string_mode = true;
+					asl.push(Instruction::StringMode);
+				},
+				c => {
+					asl.push(c);
+					continue;
+				}
+			}
+		}
+		Program { asl }
+	}
+}
+
+impl Instruction {
+	pub fn from_char(c: &char) -> Option<Instruction> {
+		Some(match c {
+			'<' => Instruction::LeftIndex,
+			'>' => Instruction::RightIndex,
+			';' => Instruction::SetColumn,
+			'~' => Instruction::RemoteStack,
+			'^' => Instruction::MoveToRemote,
+			'v' => Instruction::MoveToLocal,
+			'&' => Instruction::Discard,
+			'\\' => Instruction::Swap,
+			':' => Instruction::Duplicate,
+			'c' => Instruction::Clear,
+			'0'..'9' => Instruction::Value(c.to_digit(10u32).unwrap() as u8),
+			'?' => Instruction::If,
+			'+' => Instruction::Add,
+			'-' => Instruction::Subtract,
+			'*' => Instruction::Multiply,
+			'/' => Instruction::Divide,
+			'%' => Instruction::Modulo,
+			'=' => Instruction::Equals,
+			'`' => Instruction::GreaterThan,
+			'!' => Instruction::Invert,
+			'"' => Instruction::StringMode,
+			'_' => Instruction::Input,
+			'|' => Instruction::Skip,
+			'$' => Instruction::OutputChar,
+			'#' => Instruction::OutputNumber,
+			'@' => Instruction::Terminate,
+			_ => return None
+		})
+	}
 }

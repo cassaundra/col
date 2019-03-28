@@ -2,7 +2,7 @@
 
 `col` is an esoteric programming language inspired by classical architectural columns and the syntax of other esolangs like [Befunge](https://esolangs.org/wiki/Befunge) and [Brainfuck](https://esolangs.org/wiki/Brainfuck).
 
-Both instruction sets and the memory stacks are written in columns. Each column can perform a variety of operations on its own stack, as well as pop and push to another column's stack. Below is a more visual representation of this general structure. The finite source code is written at "base" of the column, while the memory stack of each column spans the shaft (length).
+Both instruction sets and the memory stacks are written in columns. Each column can perform a variety of operations on its own stack, as well as push and pop to/from another column's stack. Below is a more visual representation of this general structure. The finite source code is written at "base" of the column, while the memory stack of each column spans the shaft (length).
 
 ```
          ┌─ #4
