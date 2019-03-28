@@ -27,12 +27,12 @@ Once the specification is stable, I'll begin writing an interpreter in Rust.
 
 ### Rules
 
-- Sources should be written in UTF-8 plain text.
+- *Sources should be written in UTF-8 plain text.
 - Space and tab characters are ignored.
 - There are a finite number of columns, defined by the source. Each has a finite instruction set and a memory stack of no official max capacity (depends on implementation).
 - Lines (separated by line feeds) represent columns, where the line index maps to the column index (e.g. first line is column \#0).
 - When an instruction stack has completed execution, it repeats.
-- Values are unsigned 8-bit integers. If a program accepts user input, it's interpreted as UTF-8 and translated into an unsigned 8-bit integer.
+- *Values are unsigned 8-bit integers. If a program accepts user input, it's interpreted as UTF-8 and translated into an unsigned 8-bit integer.
 - Each column may switch its "remote" stack, which is by default itself (so `^` and `v` yield no change).
 - The columns are organized conceptually as a circle, wrapping at either end.
 - The runtime user's input is also represented as a stack.
@@ -40,13 +40,21 @@ Once the specification is stable, I'll begin writing an interpreter in Rust.
 	- Dividing by zero results in zero being pushed to the local stack.
 	- Attempting to pop a value from an empty stack (whether it be local, remote, or user input) results in zero being pushed to the local stack.
 - The defined remote stack of a column persists between executions.
-- TODO max number of columns? would probably be 256
+
+\* Depends on the implementation.
 
 ### Implementation
 
-There are certain aspects of `col` that are left up to implementation. These are as follows:
+There are certain aspects of `col` that are left up to implementation:
 
-- The max stack size. It's
+- **Max stack size**
+    - Default: unlimited
+- **Max number of columns**
+    - Default: unlimited
+- **Charset**
+    - Default: UTF-8
+- **Value type**
+    - Default: unsigned 8-bit integer
 
 ### Instructions
 
