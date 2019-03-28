@@ -5,23 +5,37 @@
 Both instruction sets and the memory stacks are written in columns. Each column can perform a variety of operations on its own stack, as well as pop and push to another column's stack. Below is a more visual representation of this general structure. The finite source code is written at "base" of the column, while the memory stack of each column spans the shaft (length).
 
 ```
- 5   5   5   5
- 4   4   4   4
- 3   3   3   3
- 2   2   2   2
- 1   1   1   1
- 0   0   0   0  <- bottom of stack
---- --- --- --- ...
- a   d   g   j  <- first instruction
- b   e   h   k
+         ┌─ #4
+         │
+ 5       │   0
+ 4       │   1
+ 3   7   │   0
+ 2   5   v   1
+ 1   3       0               1) Instructions are executed
+ 0   1   6   1  <- #2           from top to bottom
+─── ─── ─── ─── ...          2) Bottom of stack                
+ a   d   g   j  <- #1        3) Column currently being executed
+ b   e   h   k               4) Selected remote stack          
  c   f   i   l
+
+     ^
+     #3
+```
+
+The source of the above program would be:
+
+```
+abc
+def
+ghi
+jkl
 ```
 
 Because any column may modify another column's stack, there are really no assurances of immutability or privacy. In "traditional" programming, this would be terrifying, but it's an intentional design choice here. By not restricting the accessibility of memory *but* still defining clear associations between instruction sets and their memory, interesting solutions emerge. Furthermore, "functions" (instruction sets) may have memory that persists longer than a single call.
 
 `col` is not designed to to be a "good" programming language. It's nothing more than a fun experiment that encourages the programmer to break out of traditional habits and invent alternative ways of solving problems. I hope you enjoy playing around with it :)
 
-Once the specification is stable, I'll begin writing an interpreter in Rust.
+I'm in the process of writing an interpreter in Rust.
 
 ## Specification
 
@@ -38,7 +52,7 @@ Once the specification is stable, I'll begin writing an interpreter in Rust.
 - The runtime user's input is also represented as a stack.
 - If any operation cannot be performed, the value zero is used.
 	- Dividing by zero results in zero being pushed to the local stack.
-	- Attempting to pop a value from an empty stack (whether it be local, remote, or user input) results in zero being pushed to the local stack.
+	- Attempting to pop a value from an empty stack (whether it be local, remote, or user input) results in zero being used instead.
 - The defined remote stack of a column persists between executions.
 
 \* Depends on the implementation.
