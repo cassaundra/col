@@ -22,11 +22,15 @@ pub enum Instruction {
 	/// Discard the top value of the local stack.
 	Discard,
 	/// Swap the top two values of the local stack.
-	Swap,
+	SwapTop,
 	/// Duplicate the top value of the local stack.
 	Duplicate,
 	/// Clear the local stack.
 	Clear,
+	/// Swap the local and remote stacks.
+	SwapStacks,
+	/// Reverse the order of the local stack.
+	Reverse,
 	/// Push a value to the local stack.
 	Value(u8),
 	/// Pop `a` and only execute the following instruction if `a` is not zero.
@@ -103,9 +107,11 @@ impl Instruction {
 			'^' => Instruction::MoveToRemote,
 			'v' => Instruction::MoveToLocal,
 			'&' => Instruction::Discard,
-			'\\' => Instruction::Swap,
+			'\\' => Instruction::SwapTop,
 			':' => Instruction::Duplicate,
 			'c' => Instruction::Clear,
+			's' => Instruction::SwapStacks,
+			'r' => Instruction::Reverse,
 			'0'..'9' => Instruction::Value(c.to_digit(10u32).unwrap() as u8),
 			'?' => Instruction::If,
 			'+' => Instruction::Add,

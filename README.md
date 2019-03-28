@@ -47,7 +47,7 @@ I'm in the process of writing an interpreter in Rust.
 - Lines (separated by line feeds) represent columns, where the line index maps to the column index (e.g. first line is column \#0).
 - When an instruction stack has completed execution, it repeats.
 - *Values are unsigned 8-bit integers. If a program accepts user input, it's interpreted as UTF-8 and translated into an unsigned 8-bit integer.
-- Each column may switch its "remote" stack, which is by default itself (so `^` and `v` yield no change).
+- Each column may switch its "remote" stack, which is by default itself (so `^`, `v`, and `s` yield no change).
 - The columns are organized conceptually as a circle, wrapping at either end.
 - The runtime user's input is also represented as a stack.
 - If any operation cannot be performed, the value zero is used.
@@ -84,6 +84,8 @@ There are certain aspects of `col` that are left up to implementation:
 | `\` | Swap the top two values of the local stack.                                                                                      |
 | `:` | Duplicate the top value of the local stack (peek + push).                                                                        |
 | `c` | Clear the local stack.                                                                                                           |
+| `s` | Swap the local and remote stacks.                                                                                                |
+| `r` | Reverse the order of the local stack.                                                                                            |
 |`0-9`| Push a number value to the stack (*not* the UTF-8 value of the digit).                                                           |
 | `?` | Pop `a` and only run the next instruction if `a` is not zero.                                                                    |
 | `+` | Pop values `a` and `b` and push the result of `a` plus `b`.                                                                      |
