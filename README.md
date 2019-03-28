@@ -25,9 +25,13 @@ Once the specification is stable, I'll begin writing an interpreter in Rust.
 
 ## Specification
 
+### Rules
+
 - Sources should be written in UTF-8 plain text.
+- Space and tab characters are ignored.
 - There are a finite number of columns, defined by the source. Each has a finite instruction set and a memory stack of no official max capacity (depends on implementation).
 - Lines (separated by line feeds) represent columns, where the line index maps to the column index (e.g. first line is column \#0).
+- When an instruction stack has completed execution, it repeats.
 - Values are unsigned 8-bit integers. If a program accepts user input, it's interpreted as UTF-8 and translated into an unsigned 8-bit integer.
 - Each column may switch its "remote" stack, which is by default itself (so `^` and `v` yield no change).
 - The columns are organized conceptually as a circle, wrapping at either end.
@@ -36,20 +40,26 @@ Once the specification is stable, I'll begin writing an interpreter in Rust.
 	- Dividing by zero results in zero being pushed to the local stack.
 	- Attempting to pop a value from an empty stack (whether it be local, remote, or user input) results in zero being pushed to the local stack.
 - The defined remote stack of a column persists between executions.
+- TODO max number of columns? would probably be 256
+
+### Implementation
+
+There are certain aspects of `col` that are left up to implementation. These are as follows:
+
+- The max stack size. It's
 
 ### Instructions
 
 | Cmd | Description                                                                                                                      |
 |:---:|----------------------------------------------------------------------------------------------------------------------------------|
-| `<` | Begin executing the instruction set of the column on the left.                                                                   |
-| `>` | Begin executing the instruction set of the column on the right.                                                                  |
+| `<` | Push the index of the column on the left to the local stack.                                                                     |
+| `>` | Push the index of the column on the right to the local stack.                                                                    |
 | `;` | Pop value `a` and begin execution at the `a`th column.                                                                           |
 | `~` | Pop value `a` and set the remote stack to the `a`th column's stack.                                                              |
 | `^` | Pop value `a` from the *local* stack and push to the *remote* stack.                                                             |
 | `v` | Pop value `a` from the *remote* stack and push to the *local* stack.                                                             |
-| `~` | Pop value `a` from the local stack and set the remote stack of index `a`.                                                        |
-| `!` | Pop a value from the local stack and do nothing.                                                                                 |
-| `\` | Swap the top two values on the local stack.                                                                                      |
+| `&` | Discard the top value of the local stack.                                                                                        |
+| `\` | Swap the top two values of the local stack.                                                                                      |
 | `:` | Duplicate the top value of the local stack (peek + push).                                                                        |
 | `c` | Clear the local stack.                                                                                                           |
 |`0-9`| Push a number value to the stack (*not* the UTF-8 value of the digit).                                                           |
@@ -59,9 +69,9 @@ Once the specification is stable, I'll begin writing an interpreter in Rust.
 | `*` | Pop values `a` and `b` and push the result of `a` times `b`.                                                                     |
 | `/` | Pop values `a` and `b` and push the integer result of `b` divided by `a`. If `a` is zero, then zero will be pushed to the stack. |
 | `%` | Pop values `a` and `b` and push the remainder of the integer division of `b` divided by `a`.                                     |
-| `=` | Pop `a` and `b`, and push one if `a` equals `b`, and zero otherwise.                                                             |
+| `=` | Pop values `a` and `b`, and push one if `a` equals `b`, and zero otherwise.                                                      |
 |`` ` ``| Pop values `a` and `b` and push one if `b` is greater than `a`, and zero otherwise.                                            |
-| `&` | Invert the top value of the local stack. If it's zero, push one, and if it's non-zero, push zero.                                |
+| `!` | Invert the top value of the local stack. If it's zero, push one, and if it's non-zero, push zero.                                |
 | `"` | Toggle string mode and push UTF-8 values until next `"`.                                                                         |
 | `_` | Pop UTF-8 char from user input and push to the stack. If no more are available, push zero.                                       |
 |`\|` | Skip next instruction.                                                                                                           |
@@ -74,13 +84,13 @@ Once the specification is stable, I'll begin writing an interpreter in Rust.
 **Hello world:**
 
 ```
-"!dlrow, olleH">
-0~v:&?@$
+"!dlrow, olleH">;
+0~v:!?@$
 ```
 
 **Fibonacci:**
 
 ```
-1:#>
+1:#>;
 0~v+::^#
 ```
