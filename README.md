@@ -108,7 +108,7 @@ There are certain aspects of `col` that are left up to implementation:
 **Hello world:**
 
 ```
-"!dlrow, olleH">;
+"Hello, world!"r>;
 0~v:!?@$
 ```
 
