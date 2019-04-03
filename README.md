@@ -76,6 +76,7 @@ There are certain aspects of `col` that are left up to implementation:
 |:---:|----------------------------------------------------------------------------------------------------------------------------------|
 | `<` | Push the index of the column on the left to the local stack.                                                                     |
 | `>` | Push the index of the column on the right to the local stack.                                                                    |
+| `.` | Push the index of the current column to the local stack.                                                                         |
 | `;` | Pop value `a` and begin execution at the `a`th column.                                                                           |
 | `~` | Pop value `a` and set the remote stack to the `a`th column's stack.                                                              |
 | `^` | Pop value `a` from the *local* stack and push to the *remote* stack.                                                             |
@@ -101,6 +102,7 @@ There are certain aspects of `col` that are left up to implementation:
 |`\|` | Skip next instruction.                                                                                                           |
 | `$` | Pop `a` and print its UTF-8 value.                                                                                               |
 | `#` | Pop `a` and print its numeric value.                                                                                             |
+| `p` | Print all values in stack (from top to bottom) as UTF-8 characters.                                                              |
 | `@` | Terminate the entire program.                                                                                                    |
 
 ## Examples
@@ -108,8 +110,7 @@ There are certain aspects of `col` that are left up to implementation:
 **Hello world:**
 
 ```
-"Hello, world!"r>;
-0~v:!?@$
+"Hello, world!"rp
 ```
 
 **Fibonacci:**

@@ -11,6 +11,8 @@ pub enum Instruction {
 	LeftIndex,
 	/// Push the index of the column on the right onto the local stack
 	RightIndex,
+	/// Push the index of the current column to the local stack.
+	CurrentIndex,
 	/// Pop value `a` and begin execution at the `a`th column.
 	SetColumn,
 	/// Pop value `a` and set the remote stack to the `a`th column.
@@ -58,9 +60,11 @@ pub enum Instruction {
 	/// Skip the next instruction.
 	Skip,
 	/// Pop `a` and print its UTF-8 value.
-	OutputChar,
+	PrintChar,
 	/// Pop `a` and print its numeric value.
-	OutputNumber,
+	PrintNumber,
+	/// Print all values in stack (from top to bottom) as UTF-8 characters.
+	PrintAll,
 	/// Terminate the entire program.
 	Terminate
 }
@@ -73,18 +77,14 @@ impl Program {
 		for c in source.chars() {
 			let instruction = Instruction::from_char(&c);
 
-			if is_string_mode {
-				if instruction == Some(Instruction::StringMode) {
-					is_string_mode = false;
-					continue;
-				}
+			if is_string_mode && instruction != Some(Instruction::StringMode) {
 				asl.push(Instruction::Value(c as u8));
 				continue;
 			}
 
 			match instruction.unwrap() {
 				Instruction::StringMode => {
-					is_string_mode = true;
+					is_string_mode = !is_string_mode;
 					asl.push(Instruction::StringMode);
 				},
 				c => {
@@ -102,6 +102,7 @@ impl Instruction {
 		Some(match c {
 			'<' => Instruction::LeftIndex,
 			'>' => Instruction::RightIndex,
+			'.' => Instruction::CurrentIndex,
 			';' => Instruction::SetColumn,
 			'~' => Instruction::RemoteStack,
 			'^' => Instruction::MoveToRemote,
@@ -125,8 +126,9 @@ impl Instruction {
 			'"' => Instruction::StringMode,
 			'_' => Instruction::Input,
 			'|' => Instruction::Skip,
-			'$' => Instruction::OutputChar,
-			'#' => Instruction::OutputNumber,
+			'$' => Instruction::PrintChar,
+			'#' => Instruction::PrintNumber,
+			'p' => Instruction::PrintAll,
 			'@' => Instruction::Terminate,
 			_ => return None
 		})

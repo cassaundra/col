@@ -6,5 +6,6 @@ mod parser;
 
 fn main() {
 	let program = ">>^cv\"abc\"";
-	Program::parse(program);
+	let program = Program::parse(program);
+	println!("{:?}", program);
 }
