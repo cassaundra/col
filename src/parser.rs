@@ -77,11 +77,13 @@ impl Program {
 		for c in source.chars() {
 			let instruction = Instruction::from_char(&c);
 
+			// exit string mode?
 			if is_string_mode && instruction != Some(Instruction::StringMode) {
 				asl.push(Instruction::Value(c as u8));
 				continue;
 			}
 
+			// otherwise, handle tokens as normal
 			match instruction.unwrap() {
 				Instruction::StringMode => {
 					is_string_mode = !is_string_mode;
@@ -113,7 +115,7 @@ impl Instruction {
 			'c' => Instruction::Clear,
 			's' => Instruction::SwapStacks,
 			'r' => Instruction::Reverse,
-			'0'..'9' => Instruction::Value(c.to_digit(10u32).unwrap() as u8),
+			'0'..'9' => Instruction::Value(c.to_digit(10).unwrap() as u8),
 			'?' => Instruction::If,
 			'+' => Instruction::Add,
 			'-' => Instruction::Subtract,
