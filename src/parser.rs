@@ -1,8 +1,8 @@
 use std::ops::Range;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Program {
-	asl: Vec<Instruction>
+	pub asl: Vec<Vec<Instruction>>
 }
 
 #[derive(Debug, PartialEq)]
@@ -14,9 +14,9 @@ pub enum Instruction {
 	/// Push the index of the current column to the local stack.
 	CurrentIndex,
 	/// Pop value `a` and begin execution at the `a`th column.
-	SetColumn,
+	SetLocalColumn,
 	/// Pop value `a` and set the remote stack to the `a`th column.
-	RemoteStack,
+	SetRemoteStack,
 	/// Pop value `a` from the local stack and push to the remote stack.
 	MoveToRemote,
 	/// Pop value `a` from the remote stack and push to the local stack
@@ -71,6 +71,7 @@ pub enum Instruction {
 
 impl Program {
 	// TODO error/result
+	// TODO multiple columns
 	pub fn parse(source: &str) -> Program {
 		let mut asl = Vec::new();
 		let mut is_string_mode = false;
@@ -95,7 +96,7 @@ impl Program {
 				}
 			}
 		}
-		Program { asl }
+		Program { asl: vec![asl] }
 	}
 }
 
@@ -105,8 +106,8 @@ impl Instruction {
 			'<' => Instruction::LeftIndex,
 			'>' => Instruction::RightIndex,
 			'.' => Instruction::CurrentIndex,
-			';' => Instruction::SetColumn,
-			'~' => Instruction::RemoteStack,
+			';' => Instruction::SetLocalColumn,
+			'~' => Instruction::SetRemoteStack,
 			'^' => Instruction::MoveToRemote,
 			'v' => Instruction::MoveToLocal,
 			'&' => Instruction::Discard,
