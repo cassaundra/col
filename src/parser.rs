@@ -1,10 +1,5 @@
 use std::ops::Range;
 
-#[derive(Debug, Default)]
-pub struct Program {
-	pub asl: Vec<Vec<Instruction>>
-}
-
 #[derive(Debug, PartialEq)]
 pub enum Instruction {
 	/// Push the index of the column on the left onto the local stack
@@ -69,38 +64,8 @@ pub enum Instruction {
 	Terminate
 }
 
-impl Program {
-	// TODO error/result
-	// TODO multiple columns
-	pub fn parse(source: &str) -> Program {
-		let mut asl = Vec::new();
-		let mut is_string_mode = false;
-		for c in source.chars() {
-			let instruction = Instruction::from_char(&c);
-
-			// exit string mode?
-			if is_string_mode && instruction != Some(Instruction::StringMode) {
-				asl.push(Instruction::Value(c as u8));
-				continue;
-			}
-
-			// otherwise, handle tokens as normal
-			match instruction.unwrap() {
-				Instruction::StringMode => {
-					is_string_mode = !is_string_mode;
-					asl.push(Instruction::StringMode);
-				},
-				c => {
-					asl.push(c);
-					continue;
-				}
-			}
-		}
-		Program { asl: vec![asl] }
-	}
-}
-
 impl Instruction {
+	/// Attempts to convert a single char to a col instruction
 	pub fn from_char(c: &char) -> Option<Instruction> {
 		Some(match c {
 			'<' => Instruction::LeftIndex,

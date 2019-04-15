@@ -1,35 +1,40 @@
-use crate::parser::{Program, Instruction};
+use crate::parser::{Parser, Instruction};
 use std::io::{Read, Write, Error};
-
-pub struct ProgramState {
-	stacks: Vec<Vec<u8>>,
-	output: String
-}
+use crate::stack::{Stack, VecStack};
 
 #[derive(Default)]
 pub struct Interpreter<'a> {
-	program: Program,
+	/// The source of the program
+	source: &'a str,
 	reader: Option<&'a mut Read>,
 	writer: Option<&'a mut Write>,
-	stacks: Vec<Vec<u8>>,
-	/// Instruction pointer
+	stacks: &'a [VecStack],
 	local_column: u8,
-	remote_column: u8
+	remote_column: u8,
+	is_string_mode: bool,
+	/// Instruction pointer
+	ip: usize,
 }
 
 impl<'a> Interpreter<'a> {
 	/// Create a new col interpeter from a program
-	pub fn new<R: Read, W: Write>(program: Program, reader: &'a mut R, writer: &'a mut W) -> Self {
+	pub fn new<R: Read, W: Write>(program: &'a str, reader: &'a mut R, writer: &'a mut W) -> Self {
 		let mut interpeter = Self::default();
-		interpeter.load(program);
+
+		interpeter.load_source(program);
+
 		interpeter.read_from(reader);
 		interpeter.write_to(writer);
 
 		interpeter
 	}
 
-	pub fn load(&mut self, program: Program) -> &mut Self {
+	fn load_source(&mut self, program: &'a str) -> &mut Self {
 		self.program = program;
+
+		let num_columns = program.lines().len();
+		self.stacks = &[VecStack::default(), num_columns];
+
 		self
 	}
 
@@ -47,9 +52,7 @@ impl<'a> Interpreter<'a> {
 
 	/// Executes the program until it terminates.
 	pub fn run(&mut self) -> Result<(), Error> {
-//		for instr in self.program.asl {
-//			self.execute_instruction(instr);
-//		}
+		self.ip = 0;
 		Ok(())
 	}
 
@@ -59,63 +62,121 @@ impl<'a> Interpreter<'a> {
 
 	// TODO ret result?
 	fn execute_instruction(&mut self, instruction: Instruction) {
+		// TODO
+		let local_stack = &mut self.stacks[self.local_column as usize];
+		let remote_stack = &(self.stacks[self.remote_column as usize]);
+
 		match instruction {
 			Instruction::LeftIndex => {
-				let num_columns = self.program.asl.len() as isize;
+				let num_columns = self.program.columns.len() as isize;
 				let pos = self.local_column as isize - 1; // conv. to signed for negative shift
-				let pos = new_pos.rem_euclid(num_columns) as u8; // use math mod for wrapping
+				let pos = pos.rem_euclid(num_columns) as u8; // use math mod for wrapping
 
-				self.local_stack().push(pos);
+				local_stack.push(pos);
 			},
 			Instruction::RightIndex => {
 				// no need for signed since we'd be wrapping above
-				let num_columns = self.program.asl.len();
+				let num_columns = self.program.columns.len() as u8;
 				let pos = (self.local_column + 1) % num_columns;
 
-				self.local_stack().push(pos);
+				local_stack.push(pos);
 			},
 			Instruction::CurrentIndex => {
-				self.local_stack().push(self.local_column);
+				local_stack.push(self.local_column);
 			},
 			Instruction::SetLocalColumn => {
-				let pos = self.pop_local();
+				let pos = local_stack().pop_safe();
 				self.local_column = pos;
 				// TODO begin execution there
 			}
 			Instruction::SetRemoteStack => {
-				self.remote_column = self.pop_local();
+				self.remote_column = local_stack().pop_safe();
 			},
 			Instruction::MoveToRemote => {
-				self.remote_stack().push(self.pop_local());
+				remote_stack().push(local_stack().pop_safe());
 			},
 			Instruction::MoveToLocal => {
-				self.local_stack().push(self.pop_remote());
+				local_stack().push(remote_stack().pop_safe());
 			},
 			Instruction::Discard => {
-				self.local_stack().pop();
+				local_stack().pop();
 			},
 			Instruction::SwapTop => {
 				// TODO is there a better way to write this
-				let len = self.local_stack().len();
-				self.local_stack().swap(len, len - 1);
-			}
-			_ => {}
+				let len = local_stack().len();
+				local_stack().swap(len, len - 1);
+			},
+			Instruction::Duplicate => {
+
+			},
+			Instruction::Clear => {
+				local_stack().clear();
+			},
+			Instruction::SwapStacks => {
+
+			},
+			Instruction::Reverse => {
+				local_stack().reverse();
+			},
+			Instruction::Value(value) => {
+				local_stack().push(value);
+			},
+			Instruction::If => {
+				// TODO need program state
+			},
+			Instruction::Add => {
+				local_stack().push(local_stack().pop_safe() + local_stack().pop_safe());
+			},
+			Instruction::Subtract => {
+				let a = local_stack().pop_safe();
+				let b = local_stack().pop_safe();
+				local_stack().push(b - a);
+			},
+			Instruction::Multiply => {
+				local_stack().push(local_stack().pop_safe() * local_stack().pop_safe());
+			},
+			Instruction::Divide => {
+				let a = local_stack().pop_safe();
+				let b = local_stack().pop_safe();
+				local_stack().push(b / a);
+			},
+			Instruction::Modulo => {
+				let a = local_stack().pop_safe();
+				let b = local_stack().pop_safe();
+				local_stack().push(b % a); // TODO euclidean mod or?
+			},
+			Instruction::Equals => {
+				// b == a
+				local_stack().push((local_stack().pop_safe() == local_stack().pop_safe()) as u8);
+			},
+			Instruction::GreaterThan => {
+				// b > a
+				local_stack().push((local_stack().pop_safe() < local_stack().pop_safe()) as u8);
+			},
+			Instruction::Invert => {
+
+			},
+			Instruction::StringMode => {
+
+			},
+			Instruction::Input => {
+
+			},
+			Instruction::Skip => {
+
+			},
+			Instruction::PrintChar => {
+
+			},
+			Instruction::PrintNumber => {
+
+			},
+			Instruction::PrintAll => {
+
+			},
+			Instruction::Terminate => {
+
+			},
 		}
-	}
-
-	fn local_stack(&self) -> Vec<u8> {
-		self.stacks[self.local_column]
-	}
-
-	fn remote_stack(&self) -> Vec<u8> {
-		self.stacks[self.remote_column]
-	}
-
-	fn pop_local(&self) -> u8 {
-		self.local_stack().pop().unwrap_or_default()
-	}
-
-	fn pop_remote(&self) -> u8 {
-		self.remote_stack().pop().unwrap_or_default()
 	}
 }

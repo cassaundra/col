@@ -1,18 +1,20 @@
 #![feature(euclidean_division)]
 #![feature(exclusive_range_pattern)]
 
-use crate::parser::{Program};
+use crate::parser::{Parser};
 
 use crate::interpreter::{Interpreter};
 use std::io::{stdout, stdin};
 
 mod parser;
 mod interpreter;
+mod stack;
 
 fn main() {
-	let program = "\"Hello, world!\"rp";
-	let program = Program::parse(program);
-	println!("{:?}", program);
+	let program = "
+		\"test\"\
+		\"test2\"
+	";
 
 	{
 		let mut stdout = stdout();
