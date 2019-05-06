@@ -31,11 +31,15 @@ ghi
 jkl
 ```
 
-Because any column may modify another column's stack, there are really no assurances of immutability or privacy. In "traditional" programming, this would be terrifying, but it's an intentional design choice here. By not restricting the accessibility of memory *but* still defining clear associations between instruction sets and their memory, interesting solutions emerge. Furthermore, "functions" (instruction sets) may have memory that persists longer than a single call.
+An interpreter is currently being written in Rust.
 
-`col` is not designed to to be a "good" programming language. It's nothing more than a fun experiment that encourages the programmer to break out of traditional habits and invent alternative ways of solving problems. I hope you enjoy playing around with it :)
+## Theory
 
-I'm in the process of writing an interpreter in Rust.
+`col` is not designed to to be a "good" programming language. Instead, it attempts to disrupt typical programming paradigms enough that an experienced programmer may have to stop and think periodically. Here are a couple of the main points regarding its implications:
+
+There aren't clear assurances of immutability or privacy as any column may read and/or modify another column's stack. In traditional programming, this would be dangerous, but it's an intentional design choice in `col`. The accessibility of memory is unrestricted, but there are still clearly defined associations between instructions sets and their memory.
+
+Furthermore, "functions" (instruction sets) may have memory that persists longer than a single execution. The programmer may choose to clear the memory stack as if it's scoped, or allow it to persist through future calls, or a hybrid of both. As a result, the line between persistent and ephemeral memory is blurred.
 
 ## Specification
 
