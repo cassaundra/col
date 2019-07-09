@@ -1,19 +1,24 @@
 use crate::parser::Instruction;
-use std::io::{Read, Write, Error};
+use std::io::{Read, Write};
 use crate::stack::{Stack, VecStack};
 
 #[derive(Default)]
 pub struct Interpreter<'a> {
 	/// The source of the program
 	source: Vec<&'a str>,
+	/// Program input
 	reader: Option<&'a mut dyn Read>,
+	/// Program output
 	writer: Option<&'a mut dyn Write>,
+	/// The memory stacks
 	stacks: Vec<VecStack>,
 	/// The index of the current local column
 	local_column: u32,
 	/// The index of the current remote column
 	remote_column: u32,
+	/// Whether or not the interpreter is in string mode
 	is_string_mode: bool,
+	/// Whether or not the next instruction will be skipped
 	skip_next: bool,
 	/// Instruction pointer
 	ip: u32,
@@ -21,12 +26,12 @@ pub struct Interpreter<'a> {
 
 #[derive(PartialEq)]
 enum InterpreterState {
-	Executing,
+	Alive,
 	Terminated,
 }
 
 impl<'a> Interpreter<'a> {
-	/// Create a new col interpeter from a program
+	/// Create a new col interpreter from a program
 	pub fn new<R: Read, W: Write>(program: &'a str, reader: &'a mut R, writer: &'a mut W) -> Self {
 		let mut interpeter = Self::default();
 
@@ -53,47 +58,105 @@ impl<'a> Interpreter<'a> {
 		self.ip = 0;
 
 		while {
-			self.step()? == InterpreterState::Executing
+			// keep stepping until terminated
+			self.step()? != InterpreterState::Terminated
 		} {}
 
 		Ok(())
 	}
 
-	fn increment_ip(&mut self, line_len: u32) {
-		self.ip += 1;
-		self.ip = self.ip % line_len;
+	fn current_line(&self) -> String {
+		self.source[self.local_column as usize].to_owned()
 	}
 
-	fn step(&mut self) -> std::io::Result<InterpreterState> {
-		let line = self.source[self.local_column as usize];
+	/// Find the matching right bracket forwards
+	fn matching_forwards(&self) -> u32 {
+		let iter = (self.ip + 1)..self.current_line().len() as u32;
+		self.matching(&Instruction::LeftBracket, &Instruction::RightBracket, iter)
+	}
 
-		if self.is_string_mode {
-			let c = line.chars().nth(self.ip as usize).unwrap();
+	/// Find the matching left bracket backwards
+	fn matching_backwards(&self) -> u32 {
+		self.matching(&Instruction::RightBracket, &Instruction::LeftBracket, (0..self.ip - 1).rev())
+	}
 
-			if Instruction::from_char(&c) == Some(Instruction::StringMode) {
-				self.is_string_mode = false;
-			} else {
-				self.stacks[self.local_column as usize].push(c as u32);
-			}
+	/// Used by matching_backwards and matching_forwards
+	fn matching<I>(&self, current: &Instruction, matching: &Instruction, iter: I) -> u32
+		where I: Iterator<Item = u32> {
+		let line = self.current_line();
 
-			self.increment_ip(line.len() as u32);
-		} else {
-			loop {
-				let instr = line.chars().nth(self.ip as usize).and_then(|c| Instruction::from_char(&c));
+		let mut depth = 0;
 
-				self.increment_ip(line.len() as u32);
+		for i in iter {
+			let instr = line.chars().nth(i as usize)
+				.and_then(|c| Instruction::from_char(&c));
 
-				if let Some(instr) = instr {
-					return self.execute_instruction(instr);
+			if instr == Some(*current) {
+				depth += 1;
+			} else if instr == Some(*matching) {
+				if depth == 0 {
+					return i;
+				} else {
+					depth -= 1;
 				}
 			}
 		}
 
-		return Ok(InterpreterState::Executing);
+		return 0;
+	}
+
+	/// Safely increment the instruction pointer by one
+	fn increment_ip(&mut self) {
+		self.ip += 1;
+		self.ip = self.ip % self.current_line().len() as u32;
+	}
+
+	/// Perform one program step
+	fn step(&mut self) -> std::io::Result<InterpreterState> {
+		let line = self.current_line();
+
+		// handle special skip mode
+		if self.skip_next {
+			self.skip_next = false;
+			return Ok(InterpreterState::Alive);
+		}
+
+		// string mode stuff
+		let state = if self.is_string_mode {
+			let c = line.chars().nth(self.ip as usize);
+			let instr = c.and_then(|c| Instruction::from_char(&c));
+
+			// prioritize exiting strng mode
+			if instr == Some(Instruction::StringMode) {
+				self.is_string_mode = false;
+			} else {
+				// push a raw value to the stack
+				self.stacks[self.local_column as usize].push(c as u32); // TODO is this a safe cast?
+			}
+
+			InterpreterState::Alive // cool no matter what (:
+		} else {
+			let mut instr = None;
+
+			// find the next valid instruction
+			while instr == None {
+				instr = line.chars().nth(self.ip as usize).and_then(|c| Instruction::from_char(&c));
+			}
+
+			// execute and pass on result
+			self.execute_instruction(instr.unwrap())?
+		};
+
+		// increment *safely* for next iteration
+		self.increment_ip();
+
+		return Ok(state);
 	}
 
 	fn execute_instruction(&mut self, instruction: Instruction) -> std::io::Result<InterpreterState> {
 		let num_columns = self.stacks.len();
+
+		// TODO scary iter_mut stuff to appease the borrow checker
 
 		let stacks_mut = self.stacks.iter_mut();
 
@@ -110,11 +173,6 @@ impl<'a> Interpreter<'a> {
 			}
 		}
 
-		if self.skip_next {
-			self.skip_next = false;
-			return Ok(InterpreterState::Executing);
-		}
-
 		let local_stack = local_stack.unwrap();
 
 		match instruction {
@@ -122,16 +180,16 @@ impl<'a> Interpreter<'a> {
 				let pos = self.local_column.wrapping_sub(1);
 
 				local_stack.push(pos);
-			}
+			},
 			Instruction::PushRightIndex => {
 				// no need for signed since we'd be wrapping above
 				let pos = self.local_column.wrapping_add(1);
 
 				local_stack.push(pos);
-			}
+			},
 			Instruction::PushCurrentIndex => {
 				local_stack.push(self.local_column); // g
-			}
+			},
 			Instruction::SetLocalColumn => {
 				self.local_column = local_stack.pop() % num_columns as u32;
 				self.ip = 0; // we'll begin executing here
@@ -180,30 +238,35 @@ impl<'a> Interpreter<'a> {
 			Instruction::Value(value) => {
 				local_stack.push(value);
 			},
-			Instruction::If => {
-				if local_stack.pop() == 0 {
-					self.skip_next = true;
+			Instruction::LeftBracket => {
+				if local_stack.peek() == 0 {
+					self.ip = self.matching_forwards();
+				}
+			},
+			Instruction::RightBracket => {
+				if local_stack.peek() != 0 {
+					self.ip = self.matching_backwards();
 				}
 			},
 			Instruction::Add => {
 				let (a, b) = local_stack.pop2();
-				local_stack.push(a + b);
+				local_stack.push(a.wrapping_add(b));
 			},
 			Instruction::Subtract => {
 				let (a, b) = local_stack.pop2();
-				local_stack.push(b - a);
+				local_stack.push(b.wrapping_sub(a));
 			},
 			Instruction::Multiply => {
 				let (a, b) = local_stack.pop2();
-				local_stack.push(a * b);
+				local_stack.push(a.wrapping_mul(b));
 			},
 			Instruction::Divide => {
 				let (a, b) = local_stack.pop2();
-				local_stack.push(b / a);
+				local_stack.push(b.wrapping_div(a));
 			},
 			Instruction::Modulo => {
 				let (a, b) = local_stack.pop2();
-				local_stack.push(b % a); // unsigned, so negative behavior is unimportant
+				local_stack.push(b % a); // unsigned, so no worries about wrapping
 			},
 			Instruction::Equals => {
 				let (a, b) = local_stack.pop2();
@@ -242,18 +305,16 @@ impl<'a> Interpreter<'a> {
 			},
 			Instruction::PrintNumber => {
 				if let Some(writer) = &mut self.writer {
-					let c = local_stack.pop();
-					write!(writer, "{}", c)?;
+					write!(writer, "{}", local_stack.pop())?;
 				}
 			},
 			Instruction::PrintAll => {
 				if let Some(writer) = &mut self.writer {
-					let s = local_stack.values().iter().rev().map(|val| {
-						std::char::from_u32(*val).unwrap()
+					let s = local_stack.values().iter().rev().filter_map(|val| {
+						std::char::from_u32(*val)
 					}).collect::<String>();
 
 					write!(writer, "{}", s)?;
-					writer.flush()?;
 
 					local_stack.clear();
 				}
@@ -263,6 +324,6 @@ impl<'a> Interpreter<'a> {
 			},
 		};
 
-		return Ok(InterpreterState::Executing);
+		return Ok(InterpreterState::Alive);
 	}
 }

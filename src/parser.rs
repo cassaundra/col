@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Instruction {
 	/// Push the index of the column on the left onto the local stack
 	PushLeftIndex,
@@ -28,8 +28,10 @@ pub enum Instruction {
 	Reverse,
 	/// Push a value to the local stack.
 	Value(u32),
-	/// Pop `a` and only execute the following instruction if `a` is not zero.
-	If,
+	/// Skip past the matching `]` if popped value `a` is zero.
+	LeftBracket,
+	/// Skip back to after the matching `[` if popped value `a` is non-zero.
+	RightBracket,
 	/// Pop values `a` and `b` off the local stack and push the result of `b` plus `a`.
 	Add,
 	/// Pop values `a` and `b` off the local stack and push the result of `b` minus `a`.
@@ -79,9 +81,10 @@ impl Instruction {
 			'c' => Instruction::Clear,
 			's' => Instruction::SwapStacks,
 			'r' => Instruction::Reverse,
-			'0'..'9' => Instruction::Value(c.to_digit(10).unwrap()),
-			'A'..'F' => Instruction::Value(*c as u32 - 'A' as u32 + 10),
-			'?' => Instruction::If,
+			'0'..='9' => Instruction::Value(c.to_digit(10).unwrap()),
+			'A'..='F' => Instruction::Value(*c as u32 - 'A' as u32 + 10),
+			'[' => Instruction::LeftBracket,
+			']' => Instruction::RightBracket,
 			'+' => Instruction::Add,
 			'-' => Instruction::Subtract,
 			'*' => Instruction::Multiply,

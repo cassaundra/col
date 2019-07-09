@@ -17,11 +17,11 @@ impl Stack for VecStack {
 	}
 
 	fn pop2(&mut self) -> (u32, u32) {
-		(self.stack.pop().unwrap_or_default(), self.stack.pop().unwrap_or_default())
+		(self.pop(), self.pop())
 	}
 
 	fn peek(&self) -> u32 {
-		*self.stack.last().unwrap()
+		*self.stack.last().unwrap_or(&0u32)
 	}
 
 	fn clear(&mut self) {

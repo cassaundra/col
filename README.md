@@ -71,7 +71,7 @@ There are certain aspects of `col` that are left up to implementation:
 - **Value type**
     - Default: unsigned 32-bit integer
     
-Ideally the max value would correspond to the number of columns, so the `;` and `~` commands can be used for every column.
+Ideally the max value would be greater than or equal to the number of columns, so the `;` and `~` commands can be used for every column.
 
 ### Instructions
 
@@ -91,8 +91,9 @@ Ideally the max value would correspond to the number of columns, so the `;` and 
 | `s` | Swap the local and remote stacks.                                                                                                |
 | `r` | Reverse the order of the local stack.                                                                                            |
 |`0-9`| Push a number value to the stack (*not* the UTF-8 value of the digit).                                                           |
-|`A-F`| Push a number value to the stack from hexadecimal (decimal 10-15).                                                               |
-| `?` | Pop `a` and only run the next instruction if `a` is not zero.                                                                    |
+|`A-F`| Push a number value to the stack from hexadecimal (decimal 10-15).                                                               | 
+| `[` | Skip past the matching `]` if popped value `a` is zero. If none found, then the IP will return to the start.                     |
+| `]` | Skip back to after the matching `[` if popped value `a` is non-zero. If none found, then the IP will return to the start.        |
 | `+` | Pop values `a` and `b` and push the result of `a` plus `b`.                                                                      |
 | `-` | Pop values `a` and `b` and push the result of `b` minus `a`.                                                                     |
 | `*` | Pop values `a` and `b` and push the result of `a` times `b`.                                                                     |
@@ -101,6 +102,7 @@ Ideally the max value would correspond to the number of columns, so the `;` and 
 | `=` | Pop values `a` and `b`, and push one if `a` equals `b`, and zero otherwise.                                                      |
 |`` ` ``| Pop values `a` and `b` and push one if `b` is greater than `a`, and zero otherwise.                                            |
 | `!` | Invert the top value of the local stack. If it's zero, push one, and if it's non-zero, push zero.                                |
+| `?` | TODO random                                                                                                                      |
 | `"` | Toggle string mode and push UTF-8 values until next `"`.                                                                         |
 | `_` | Pop UTF-8 char from user input and push to the stack. If no more are available, push zero.                                       |
 |`\|` | Skip the following instruction.                                                                                                  |
