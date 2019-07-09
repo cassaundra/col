@@ -116,10 +116,3 @@ Ideally the max value would correspond to the number of columns, so the `;` and 
 ```
 "Hello, world!"rp@
 ```
-
-**Fibonacci:**
-
-```
-1:#>;
-0~v+::^#
-```

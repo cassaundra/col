@@ -93,6 +93,8 @@ impl<'a> Interpreter<'a> {
 	}
 
 	fn execute_instruction(&mut self, instruction: Instruction) -> std::io::Result<InterpreterState> {
+		let num_columns = self.stacks.len();
+
 		let stacks_mut = self.stacks.iter_mut();
 
 		let mut local_stack = None;
@@ -131,11 +133,11 @@ impl<'a> Interpreter<'a> {
 				local_stack.push(self.local_column); // g
 			}
 			Instruction::SetLocalColumn => {
-				self.local_column = local_stack.pop();
+				self.local_column = local_stack.pop() % num_columns as u32;
 				self.ip = 0; // we'll begin executing here
 			}
 			Instruction::SetRemoteStack => {
-				self.remote_column = local_stack.pop();
+				self.remote_column = local_stack.pop() % num_columns as u32;
 			},
 			Instruction::MoveToRemote => {
 				if self.local_column != self.remote_column {

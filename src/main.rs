@@ -13,5 +13,5 @@ fn main() {
 	let mut stdin = stdin();
 
 	let mut interpeter = Interpreter::new(program, &mut stdin, &mut stdout);
-	interpeter.run();
+	interpeter.run().unwrap();
 }
