@@ -1,6 +1,8 @@
 use crate::parser::Instruction;
 use std::io::{Read, Write};
 use crate::stack::{Stack, VecStack};
+use std::time::Duration;
+use std::thread;
 
 #[derive(Default)]
 pub struct Interpreter<'a> {
@@ -59,6 +61,7 @@ impl<'a> Interpreter<'a> {
 
 		while {
 			// keep stepping until terminated
+			thread::sleep(Duration::from_millis(50));
 			self.step()? != InterpreterState::Terminated
 		} {}
 
@@ -134,6 +137,8 @@ impl<'a> Interpreter<'a> {
 				self.stacks[self.local_column as usize].push(c as u32); // TODO is this a safe cast?
 			}
 
+			self.increment_ip();
+
 			InterpreterState::Alive // cool no matter what (:
 		} else {
 			let mut instr = None;
@@ -141,20 +146,18 @@ impl<'a> Interpreter<'a> {
 			// find the next valid instruction
 			while instr == None {
 				instr = line.chars().nth(self.ip as usize).and_then(|c| Instruction::from_char(&c));
+				self.increment_ip();
 			}
 
 			// execute and pass on result
 			self.execute_instruction(instr.unwrap())?
 		};
 
-		// increment *safely* for next iteration
-		self.increment_ip();
-
 		return Ok(state);
 	}
 
 	fn execute_instruction(&mut self, instruction: Instruction) -> std::io::Result<InterpreterState> {
-		let num_columns = self.stacks.len();
+		let num_columns = self.stacks.len() as u32;
 
 		// TODO scary iter_mut stuff to appease the borrow checker
 
@@ -177,25 +180,27 @@ impl<'a> Interpreter<'a> {
 
 		match instruction {
 			Instruction::PushLeftIndex => {
-				let pos = self.local_column.wrapping_sub(1);
+				let pos = self.local_column.checked_sub(1);
 
-				local_stack.push(pos);
+				match pos {
+					Some(pos) => local_stack.push(pos),
+					None => local_stack.push(num_columns - 1),
+				}
 			},
 			Instruction::PushRightIndex => {
-				// no need for signed since we'd be wrapping above
-				let pos = self.local_column.wrapping_add(1);
+				let pos = self.local_column.wrapping_add(1) % num_columns;
 
 				local_stack.push(pos);
 			},
 			Instruction::PushCurrentIndex => {
-				local_stack.push(self.local_column); // g
+				local_stack.push(self.local_column);
 			},
 			Instruction::SetLocalColumn => {
-				self.local_column = local_stack.pop() % num_columns as u32;
+				self.local_column = local_stack.pop() % num_columns;
 				self.ip = 0; // we'll begin executing here
 			}
 			Instruction::SetRemoteStack => {
-				self.remote_column = local_stack.pop() % num_columns as u32;
+				self.remote_column = local_stack.pop() % num_columns;
 			},
 			Instruction::MoveToRemote => {
 				if self.local_column != self.remote_column {
@@ -217,7 +222,7 @@ impl<'a> Interpreter<'a> {
 			},
 			Instruction::DuplicateTop => {
 				local_stack.push(local_stack.peek())
-			}
+			},
 			Instruction::Clear => {
 				local_stack.clear();
 			},
@@ -250,7 +255,7 @@ impl<'a> Interpreter<'a> {
 			},
 			Instruction::Add => {
 				let (a, b) = local_stack.pop2();
-				local_stack.push(a.wrapping_add(b));
+				local_stack.push(b.wrapping_add(a));
 			},
 			Instruction::Subtract => {
 				let (a, b) = local_stack.pop2();
@@ -258,7 +263,7 @@ impl<'a> Interpreter<'a> {
 			},
 			Instruction::Multiply => {
 				let (a, b) = local_stack.pop2();
-				local_stack.push(a.wrapping_mul(b));
+				local_stack.push(b.wrapping_mul(a));
 			},
 			Instruction::Divide => {
 				let (a, b) = local_stack.pop2();
@@ -266,7 +271,7 @@ impl<'a> Interpreter<'a> {
 			},
 			Instruction::Modulo => {
 				let (a, b) = local_stack.pop2();
-				local_stack.push(b % a); // unsigned, so no worries about wrapping
+				local_stack.push(b.wrapping_rem(a)); // actually equivalent to b % a because unsigned
 			},
 			Instruction::Equals => {
 				let (a, b) = local_stack.pop2();
