@@ -2,16 +2,27 @@
 
 use crate::interpreter::{Interpreter};
 use std::io::{stdout, stdin};
+use clap::{App, Arg, crate_version, crate_authors, crate_description};
 
 mod parser;
 mod interpreter;
 mod stack;
 
 fn main() {
-	let program = "\"Hello world\"Arp@";
+	let matches = App::new("col")
+		.version(crate_version!())
+		.author(crate_authors!())
+		.about(crate_description!())
+		.arg(Arg::with_name("file")
+			.help("The source file to interpret.")
+			.required(true))
+		.get_matches();
+
+	let file = matches.value_of("file").unwrap();
+	let program = std::fs::read_to_string(file).expect("Could not read file");
+
 	let mut stdout = stdout();
 	let mut stdin = stdin();
 
-	let mut interpeter = Interpreter::new(program, &mut stdin, &mut stdout);
-	interpeter.run().unwrap();
+	Interpreter::new(&program, &mut stdin, &mut stdout).run().expect("An unexpected I/O error occurred.");
 }

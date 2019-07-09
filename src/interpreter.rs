@@ -49,11 +49,11 @@ impl<'a> Interpreter<'a> {
 	}
 
 	/// Executes the program until it terminates.
-	pub fn run(&mut self) -> Result<(), Error> {
+	pub fn run(&mut self) -> std::io::Result<()> {
 		self.ip = 0;
 
 		while {
-			self.step() == InterpreterState::Executing
+			self.step()? == InterpreterState::Executing
 		} {}
 
 		Ok(())
@@ -64,7 +64,7 @@ impl<'a> Interpreter<'a> {
 		self.ip = self.ip % line_len;
 	}
 
-	fn step(&mut self) -> InterpreterState {
+	fn step(&mut self) -> std::io::Result<InterpreterState> {
 		let line = self.source[self.local_column as usize];
 
 		if self.is_string_mode {
@@ -84,12 +84,12 @@ impl<'a> Interpreter<'a> {
 				self.increment_ip(line.len() as u32);
 
 				if let Some(instr) = instr {
-					return self.execute_instruction(instr).expect("An IO error occurred");
+					return self.execute_instruction(instr);
 				}
 			}
 		}
 
-		return InterpreterState::Executing;
+		return Ok(InterpreterState::Executing);
 	}
 
 	fn execute_instruction(&mut self, instruction: Instruction) -> std::io::Result<InterpreterState> {
