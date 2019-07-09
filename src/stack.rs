@@ -1,44 +1,39 @@
 #[derive(Default, Debug)]
 pub struct VecStack {
-	stack: Vec<u8>
+	stack: Vec<u32>
 }
 
 impl Stack for VecStack {
-	fn push(&mut self) {
-		unimplemented!()
+	fn stack(&self) -> &Vec<u32> {
+		&self.stack
 	}
 
-	fn pop(&mut self) -> u8 {
-		unimplemented!()
+	fn push(&mut self, value: u32) {
+		self.stack.push(value);
 	}
 
-	fn peek(&mut self) -> u8 {
-		unimplemented!()
+	fn pop(&mut self) -> u32 {
+		self.stack.pop().unwrap_or_default()
 	}
 
-	fn duplicate_top(&mut self) {
-		unimplemented!()
-	}
-
-	fn swap_top(&mut self) {
-		unimplemented!()
+	fn peek(&mut self) -> u32 {
+		*self.stack.last().unwrap()
 	}
 
 	fn clear(&mut self) {
-		unimplemented!()
+		self.stack.clear()
 	}
 
 	fn reverse(&mut self) {
-		unimplemented!()
+		self.stack.reverse()
 	}
 }
 
 pub trait Stack {
-	fn push(&mut self);
-	fn pop(&mut self) -> u8;
-	fn peek(&mut self) -> u8;
-	fn duplicate_top(&mut self);
-	fn swap_top(&mut self);
+	fn stack(&self) -> &Vec<u32>;
+	fn push(&mut self, value: u32);
+	fn pop(&mut self) -> u32;
+	fn peek(&self) -> u32;
 	fn clear(&mut self);
 	fn reverse(&mut self);
 }

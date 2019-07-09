@@ -61,11 +61,11 @@ There are certain aspects of `col` that are left up to implementation:
 - **Max stack size**
     - Default: unlimited
 - **Max number of columns**
-    - Default: 256
+    - Default: 4294967296 (2^32)
 - **Charset**
     - Default: UTF-8
 - **Value type**
-    - Default: unsigned 8-bit integer
+    - Default: unsigned 32-bit integer
     
 Ideally the max value would correspond to the number of columns, so the `;` and `~` commands can be used for every column.
 
@@ -98,7 +98,7 @@ Ideally the max value would correspond to the number of columns, so the `;` and 
 | `!` | Invert the top value of the local stack. If it's zero, push one, and if it's non-zero, push zero.                                |
 | `"` | Toggle string mode and push UTF-8 values until next `"`.                                                                         |
 | `_` | Pop UTF-8 char from user input and push to the stack. If no more are available, push zero.                                       |
-|`\|` | Skip next instruction.                                                                                                           |
+|`\|` | Skip the following instruction.                                                                                                  |
 | `$` | Pop `a` and print its UTF-8 value.                                                                                               |
 | `#` | Pop `a` and print its numeric value.                                                                                             |
 | `p` | Print all values in stack (from top to bottom) as UTF-8 characters.                                                              |

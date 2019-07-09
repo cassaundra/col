@@ -3,11 +3,11 @@ use std::ops::Range;
 #[derive(Debug, PartialEq)]
 pub enum Instruction {
 	/// Push the index of the column on the left onto the local stack
-	LeftIndex,
+	PushLeftIndex,
 	/// Push the index of the column on the right onto the local stack
-	RightIndex,
+	PushRightIndex,
 	/// Push the index of the current column to the local stack.
-	CurrentIndex,
+	PushCurrentIndex,
 	/// Pop value `a` and begin execution at the `a`th column.
 	SetLocalColumn,
 	/// Pop value `a` and set the remote stack to the `a`th column.
@@ -21,7 +21,7 @@ pub enum Instruction {
 	/// Swap the top two values of the local stack.
 	SwapTop,
 	/// Duplicate the top value of the local stack.
-	Duplicate,
+	DuplicateTop,
 	/// Clear the local stack.
 	Clear,
 	/// Swap the local and remote stacks.
@@ -29,7 +29,7 @@ pub enum Instruction {
 	/// Reverse the order of the local stack.
 	Reverse,
 	/// Push a value to the local stack.
-	Value(u8),
+	Value(u32),
 	/// Pop `a` and only execute the following instruction if `a` is not zero.
 	If,
 	/// Pop values `a` and `b` off the local stack and push the result of `b` plus `a`.
@@ -68,20 +68,20 @@ impl Instruction {
 	/// Attempts to convert a single char to a col instruction
 	pub fn from_char(c: &char) -> Option<Instruction> {
 		Some(match c {
-			'<' => Instruction::LeftIndex,
-			'>' => Instruction::RightIndex,
-			'.' => Instruction::CurrentIndex,
+			'<' => Instruction::PushLeftIndex,
+			'>' => Instruction::PushRightIndex,
+			'.' => Instruction::PushCurrentIndex,
 			';' => Instruction::SetLocalColumn,
 			'~' => Instruction::SetRemoteStack,
 			'^' => Instruction::MoveToRemote,
 			'v' => Instruction::MoveToLocal,
 			'&' => Instruction::Discard,
 			'\\' => Instruction::SwapTop,
-			':' => Instruction::Duplicate,
+			':' => Instruction::DuplicateTop,
 			'c' => Instruction::Clear,
 			's' => Instruction::SwapStacks,
 			'r' => Instruction::Reverse,
-			'0'..'9' => Instruction::Value(c.to_digit(10).unwrap() as u8),
+			'0'..'9' => Instruction::Value(c.to_digit(10).unwrap()),
 			'?' => Instruction::If,
 			'+' => Instruction::Add,
 			'-' => Instruction::Subtract,
