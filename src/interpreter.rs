@@ -129,7 +129,7 @@ impl<'a> Interpreter<'a> {
 			// prioritize exiting strng mode
 			if instr == Some(Instruction::StringMode) {
 				self.is_string_mode = false;
-			} else {
+			} else if let Some(c) = c {
 				// push a raw value to the stack
 				self.stacks[self.local_column as usize].push(c as u32); // TODO is this a safe cast?
 			}
