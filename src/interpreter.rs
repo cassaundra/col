@@ -1,21 +1,28 @@
-use crate::parser::{Parser, Instruction};
+use crate::parser::Instruction;
 use std::io::{Read, Write, Error};
 use crate::stack::{Stack, VecStack};
 
 #[derive(Default)]
 pub struct Interpreter<'a> {
 	/// The source of the program
-	source: &'a str,
-	reader: Option<&'a mut Read>,
-	writer: Option<&'a mut Write>,
-	stacks: &'a [VecStack],
+	source: Vec<&'a str>,
+	reader: Option<&'a mut dyn Read>,
+	writer: Option<&'a mut dyn Write>,
+	stacks: Vec<VecStack>,
 	/// The index of the current local column
 	local_column: u32,
 	/// The index of the current remote column
 	remote_column: u32,
 	is_string_mode: bool,
+	skip_next: bool,
 	/// Instruction pointer
 	ip: u32,
+}
+
+#[derive(PartialEq)]
+enum InterpreterState {
+	Executing,
+	Terminated,
 }
 
 impl<'a> Interpreter<'a> {
@@ -25,59 +32,98 @@ impl<'a> Interpreter<'a> {
 
 		interpeter.load_source(program);
 
-		interpeter.read_from(reader);
-		interpeter.write_to(writer);
+		interpeter.reader = Some(reader);
+		interpeter.writer = Some(writer);
 
 		interpeter
 	}
 
 	fn load_source(&mut self, program: &'a str) -> &mut Self {
-		self.program = program;
+		self.source = program.lines().collect();
 
-		let num_columns = program.lines().len();
-		self.stacks = &[VecStack::default(), num_columns];
+		let num_columns = program.lines().count();
+		dbg!(num_columns);
 
-		self
-	}
+		self.stacks = vec![VecStack::default(); num_columns];
 
-	/// Assign a reader for input as defined by the col spec.
-	pub fn read_from<R: Read>(&mut self, reader: &'a mut R) -> &mut Self {
-		self.reader = Some(reader);
-		self
-	}
-
-	/// Assign a writer for output as defined by the col spec.
-	pub fn write_to<W: Write>(&mut self, writer: &'a mut W) -> &mut Self {
-		self.writer = Some(writer);
 		self
 	}
 
 	/// Executes the program until it terminates.
 	pub fn run(&mut self) -> Result<(), Error> {
 		self.ip = 0;
+
+		while {
+			self.step() == InterpreterState::Executing
+		} {}
+
 		Ok(())
 	}
 
-	fn step(&mut self) {
-
+	fn increment_ip(&mut self, line_len: u32) {
+		self.ip += 1;
+		self.ip = self.ip % line_len;
 	}
 
-	// TODO ret result?
-	fn execute_instruction(&mut self, instruction: Instruction) {
-		// TODO
-		let mut local_stack = &self.stacks[self.local_column as u32];
-		let mut remote_stack = &self.stacks[self.remote_column as u32];
+	fn step(&mut self) -> InterpreterState {
+		let line = self.source[self.local_column as usize];
+
+		if self.is_string_mode {
+			let c = line.chars().nth(self.ip as usize).unwrap();
+
+			if Instruction::from_char(&c) == Some(Instruction::StringMode) {
+				self.is_string_mode = false;
+			} else {
+				self.stacks[self.local_column as usize].push(c as u32);
+			}
+
+			self.increment_ip(line.len() as u32);
+		} else {
+			loop {
+				let instr = line.chars().nth(self.ip as usize).and_then(|c| Instruction::from_char(&c));
+
+				self.increment_ip(line.len() as u32);
+
+				if let Some(instr) = instr {
+					return self.execute_instruction(instr).expect("An IO error occurred");
+				}
+			}
+		}
+
+		return InterpreterState::Executing;
+	}
+
+	fn execute_instruction(&mut self, instruction: Instruction) -> std::io::Result<InterpreterState> {
+		let mut stacks_mut = self.stacks.iter_mut();
+
+		let mut local_stack = None;
+		let mut remote_stack = None;
+
+		for (i, stack) in stacks_mut.enumerate() {
+			let i = i as u32;
+
+			if i == self.local_column {
+				local_stack = Some(stack);
+			} else if i == self.remote_column {
+				remote_stack = Some(stack);
+			}
+		}
+
+		if self.skip_next {
+			self.skip_next = false;
+			return Ok(InterpreterState::Executing);
+		}
+
+		let local_stack = local_stack.unwrap();
 
 		match instruction {
 			Instruction::PushLeftIndex => {
-				let num_columns = self.program.columns.len();
 				let pos = self.local_column.wrapping_sub(1);
 
 				local_stack.push(pos);
 			}
 			Instruction::PushRightIndex => {
 				// no need for signed since we'd be wrapping above
-				let num_columns = self.program.columns.len();
 				let pos = self.local_column.wrapping_add(1);
 
 				local_stack.push(pos);
@@ -86,35 +132,41 @@ impl<'a> Interpreter<'a> {
 				local_stack.push(self.local_column); // g
 			}
 			Instruction::SetLocalColumn => {
-				let pos = local_stack.pop_safe();
-				self.local_column = pos;
-				// TODO begin execution there
+				self.local_column = local_stack.pop();
+				self.ip = 0; // we'll begin executing here
 			}
 			Instruction::SetRemoteStack => {
-				self.remote_column = local_stack.pop_safe();
+				self.remote_column = local_stack.pop();
 			},
 			Instruction::MoveToRemote => {
-				remote_stack.push(local_stack.pop_safe());
+				if self.local_column != self.remote_column {
+//					let remote_stack? = stacks_mut.nth(self.remote_column as usize).unwrap();
+					remote_stack.unwrap().push(local_stack.pop());
+				}
 			},
 			Instruction::MoveToLocal => {
-				local_stack.push(remote_stack.pop_safe());
+				if self.local_column != self.remote_column {
+					let i = self.remote_column as usize;
+//					let remote_stack? = stacks_mut.slice(i, i + 1);
+					local_stack.push(remote_stack.unwrap().pop());
+				}
 			},
 			Instruction::Discard => {
 				local_stack.pop();
 			},
 			Instruction::SwapTop => {
-				// TODO is there a better way to write this
-				let len = local_stack.len();
-				local_stack.swap(len, len - 1);
+				let (a, b) = local_stack.pop2();
+				local_stack.push(a);
+				local_stack.push(b);
 			},
 			Instruction::DuplicateTop => {
-
+				local_stack.push(local_stack.peek())
 			}
 			Instruction::Clear => {
 				local_stack.clear();
 			},
 			Instruction::SwapStacks => {
-
+				// TODO
 			},
 			Instruction::Reverse => {
 				local_stack.reverse();
@@ -123,61 +175,88 @@ impl<'a> Interpreter<'a> {
 				local_stack.push(value);
 			},
 			Instruction::If => {
-				// TODO need program state
+				if local_stack.pop() == 0 {
+					self.skip_next = true;
+				}
 			},
 			Instruction::Add => {
-				local_stack.push(local_stack.pop_safe() + local_stack.pop_safe());
+				let (a, b) = local_stack.pop2();
+				local_stack.push(a + b);
 			},
 			Instruction::Subtract => {
-				let a = local_stack.pop_safe();
-				let b = local_stack.pop_safe();
+				let (a, b) = local_stack.pop2();
 				local_stack.push(b - a);
 			},
 			Instruction::Multiply => {
-				local_stack.push(local_stack.pop_safe() * local_stack.pop_safe());
+				let (a, b) = local_stack.pop2();
+				local_stack.push(a * b);
 			},
 			Instruction::Divide => {
-				let a = local_stack.pop_safe();
-				let b = local_stack.pop_safe();
+				let (a, b) = local_stack.pop2();
 				local_stack.push(b / a);
 			},
 			Instruction::Modulo => {
-				let a = local_stack.pop_safe();
-				let b = local_stack.pop_safe();
-				local_stack.push(b % a); // TODO euclidean mod or?
+				let (a, b) = local_stack.pop2();
+				local_stack.push(b % a); // unsigned, so negative behavior is unimportant
 			},
 			Instruction::Equals => {
-				// b == a
-				local_stack.push((local_stack.pop_safe() == local_stack.pop_safe()) as u8);
+				let (a, b) = local_stack.pop2();
+				local_stack.push((b == a) as u32);
 			},
 			Instruction::GreaterThan => {
-				// b > a
-				local_stack.push((local_stack.pop_safe() < local_stack.pop_safe()) as u8);
+				let (a, b) = local_stack.pop2();
+				local_stack.push((b > a) as u32);
 			},
 			Instruction::Invert => {
-
+				if local_stack.pop() == 0 {
+					local_stack.push(1);
+				} else {
+					local_stack.push(0);
+				}
 			},
 			Instruction::StringMode => {
-
+				self.is_string_mode = !self.is_string_mode;
 			},
 			Instruction::Input => {
+				if let Some(reader) = &mut self.reader {
+					let mut buffer = [0; 1];
+					reader.read(&mut buffer);
 
+					local_stack.push(buffer[0] as u32);
+				}
 			},
 			Instruction::Skip => {
-
+				self.skip_next = true;
 			},
 			Instruction::PrintChar => {
-
+				if let Some(writer) = &mut self.writer {
+					let c = std::char::from_u32(local_stack.pop()).unwrap();
+					write!(writer, "{}", c)?;
+				}
 			},
 			Instruction::PrintNumber => {
-
+				if let Some(writer) = &mut self.writer {
+					let c = local_stack.pop();
+					write!(writer, "{}", c)?;
+				}
 			},
 			Instruction::PrintAll => {
+				if let Some(writer) = &mut self.writer {
+					let s = local_stack.stack().iter().rev().map(|val| {
+						std::char::from_u32(*val).unwrap()
+					}).collect::<String>();
 
+					write!(writer, "{}", s)?;
+					writer.flush();
+
+					local_stack.clear();
+				}
 			},
 			Instruction::Terminate => {
-
+				return Ok(InterpreterState::Terminated);
 			},
-		}
+		};
+
+		return Ok(InterpreterState::Executing);
 	}
 }

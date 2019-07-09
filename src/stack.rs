@@ -1,4 +1,4 @@
-#[derive(Default, Debug)]
+#[derive(Clone, Default, Debug)]
 pub struct VecStack {
 	stack: Vec<u32>
 }
@@ -16,7 +16,11 @@ impl Stack for VecStack {
 		self.stack.pop().unwrap_or_default()
 	}
 
-	fn peek(&mut self) -> u32 {
+	fn pop2(&mut self) -> (u32, u32) {
+		(self.stack.pop().unwrap_or_default(), self.stack.pop().unwrap_or_default())
+	}
+
+	fn peek(&self) -> u32 {
 		*self.stack.last().unwrap()
 	}
 
@@ -33,6 +37,7 @@ pub trait Stack {
 	fn stack(&self) -> &Vec<u32>;
 	fn push(&mut self, value: u32);
 	fn pop(&mut self) -> u32;
+	fn pop2(&mut self) -> (u32, u32);
 	fn peek(&self) -> u32;
 	fn clear(&mut self);
 	fn reverse(&mut self);

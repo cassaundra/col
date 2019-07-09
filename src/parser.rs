@@ -82,6 +82,7 @@ impl Instruction {
 			's' => Instruction::SwapStacks,
 			'r' => Instruction::Reverse,
 			'0'..'9' => Instruction::Value(c.to_digit(10).unwrap()),
+			'A'..'F' => Instruction::Value(*c as u32 - 'A' as u32 + 10),
 			'?' => Instruction::If,
 			'+' => Instruction::Add,
 			'-' => Instruction::Subtract,

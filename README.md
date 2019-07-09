@@ -45,7 +45,7 @@ Furthermore, "functions" (instruction sets) may have memory that persists longer
 
 ### Rules
 
-- Whitespace is ignored, except in string mode.
+- Whitespace and undefined characters are ignored by the interpreter.
 - There are a finite number of columns, defined by the source. Each has a finite instruction set and a memory stack of no official max capacity (depends on implementation).
 - Lines (separated by line feeds) represent columns, where the line index maps to the column index (e.g. first line is column \#0). Leading and trailing empty lines are ignored.
 - When an instruction stack has completed execution, it repeats.
@@ -91,6 +91,7 @@ Ideally the max value would correspond to the number of columns, so the `;` and 
 | `s` | Swap the local and remote stacks.                                                                                                |
 | `r` | Reverse the order of the local stack.                                                                                            |
 |`0-9`| Push a number value to the stack (*not* the UTF-8 value of the digit).                                                           |
+|`A-F`| Push a number value to the stack from hexadecimal (decimal 10-15).                                                               |
 | `?` | Pop `a` and only run the next instruction if `a` is not zero.                                                                    |
 | `+` | Pop values `a` and `b` and push the result of `a` plus `b`.                                                                      |
 | `-` | Pop values `a` and `b` and push the result of `b` minus `a`.                                                                     |
