@@ -42,7 +42,6 @@ impl<'a> Interpreter<'a> {
 		self.source = program.lines().collect();
 
 		let num_columns = program.lines().count();
-		dbg!(num_columns);
 
 		self.stacks = vec![VecStack::default(); num_columns];
 
@@ -94,7 +93,7 @@ impl<'a> Interpreter<'a> {
 	}
 
 	fn execute_instruction(&mut self, instruction: Instruction) -> std::io::Result<InterpreterState> {
-		let mut stacks_mut = self.stacks.iter_mut();
+		let stacks_mut = self.stacks.iter_mut();
 
 		let mut local_stack = None;
 		let mut remote_stack = None;
@@ -140,14 +139,11 @@ impl<'a> Interpreter<'a> {
 			},
 			Instruction::MoveToRemote => {
 				if self.local_column != self.remote_column {
-//					let remote_stack? = stacks_mut.nth(self.remote_column as usize).unwrap();
 					remote_stack.unwrap().push(local_stack.pop());
 				}
 			},
 			Instruction::MoveToLocal => {
 				if self.local_column != self.remote_column {
-					let i = self.remote_column as usize;
-//					let remote_stack? = stacks_mut.slice(i, i + 1);
 					local_stack.push(remote_stack.unwrap().pop());
 				}
 			},
@@ -166,7 +162,15 @@ impl<'a> Interpreter<'a> {
 				local_stack.clear();
 			},
 			Instruction::SwapStacks => {
-				// TODO
+				if self.local_column != self.remote_column {
+					let remote_stack = remote_stack.unwrap();
+
+					let local_values = local_stack.values().clone();
+					let remote_values = remote_stack.values().clone();
+
+					local_stack.set_all(remote_values);
+					remote_stack.set_all(local_values);
+				}
 			},
 			Instruction::Reverse => {
 				local_stack.reverse();
@@ -220,7 +224,7 @@ impl<'a> Interpreter<'a> {
 			Instruction::Input => {
 				if let Some(reader) = &mut self.reader {
 					let mut buffer = [0; 1];
-					reader.read(&mut buffer);
+					reader.read(&mut buffer)?;
 
 					local_stack.push(buffer[0] as u32);
 				}
@@ -242,12 +246,12 @@ impl<'a> Interpreter<'a> {
 			},
 			Instruction::PrintAll => {
 				if let Some(writer) = &mut self.writer {
-					let s = local_stack.stack().iter().rev().map(|val| {
+					let s = local_stack.values().iter().rev().map(|val| {
 						std::char::from_u32(*val).unwrap()
 					}).collect::<String>();
 
 					write!(writer, "{}", s)?;
-					writer.flush();
+					writer.flush()?;
 
 					local_stack.clear();
 				}

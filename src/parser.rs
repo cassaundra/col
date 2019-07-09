@@ -1,5 +1,3 @@
-use std::ops::Range;
-
 #[derive(Debug, PartialEq)]
 pub enum Instruction {
 	/// Push the index of the column on the left onto the local stack

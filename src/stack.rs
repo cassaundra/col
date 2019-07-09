@@ -4,7 +4,7 @@ pub struct VecStack {
 }
 
 impl Stack for VecStack {
-	fn stack(&self) -> &Vec<u32> {
+	fn values(&self) -> &Vec<u32> {
 		&self.stack
 	}
 
@@ -31,14 +31,19 @@ impl Stack for VecStack {
 	fn reverse(&mut self) {
 		self.stack.reverse()
 	}
+
+	fn set_all(&mut self, values: Vec<u32>) {
+		self.stack = values;
+	}
 }
 
 pub trait Stack {
-	fn stack(&self) -> &Vec<u32>;
+	fn values(&self) -> &Vec<u32>;
 	fn push(&mut self, value: u32);
 	fn pop(&mut self) -> u32;
 	fn pop2(&mut self) -> (u32, u32);
 	fn peek(&self) -> u32;
 	fn clear(&mut self);
 	fn reverse(&mut self);
+	fn set_all(&mut self, values: Vec<u32>);
 }
