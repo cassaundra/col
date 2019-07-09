@@ -14,12 +14,12 @@ pub enum Instruction {
 	MoveToRemote,
 	/// Pop value `a` from the remote stack and push to the local stack
 	MoveToLocal,
-	/// Discard the top value of the local stack.
-	Discard,
 	/// Swap the top two values of the local stack.
 	SwapTop,
 	/// Duplicate the top value of the local stack.
 	DuplicateTop,
+	/// Discard the top value of the local stack.
+	Discard,
 	/// Clear the local stack.
 	Clear,
 	/// Swap the local and remote stacks.
@@ -46,14 +46,16 @@ pub enum Instruction {
 	Equals,
 	/// Pop values `a` and `b` and push `1` if `b` is greater than `a` and `0` otherwise.
 	GreaterThan,
+	/// Pop values `a` and `b` and push one if they're both non-zero, and push zero otherwise. Not a bitwise AND.
+	And,
+	/// Pop values `a` and `b` and push one if at least one is non-zero, and push zero if they are both zero. Not a bitwise OR.
+	Or,
 	/// Invert the top value of the local stack. If it's `0`, push one, otherwise push `1`;
 	Invert,
 	/// Toggle string mode. Until a matching "string mode" token is executed, characters will be interpreted as raw values.
 	StringMode,
 	/// Pop a value (interpreted from UTF-8 and push to the stack. If no more are available, push `0`.
 	Input,
-	/// Skip the next instruction.
-	Skip,
 	/// Pop `a` and print its UTF-8 value.
 	PrintChar,
 	/// Pop `a` and print its numeric value.
@@ -75,9 +77,9 @@ impl Instruction {
 			'~' => Instruction::SetRemoteStack,
 			'^' => Instruction::MoveToRemote,
 			'v' => Instruction::MoveToLocal,
-			'&' => Instruction::Discard,
 			'\\' => Instruction::SwapTop,
 			':' => Instruction::DuplicateTop,
+			'x' => Instruction::Discard,
 			'c' => Instruction::Clear,
 			's' => Instruction::SwapStacks,
 			'r' => Instruction::Reverse,
@@ -92,10 +94,11 @@ impl Instruction {
 			'%' => Instruction::Modulo,
 			'=' => Instruction::Equals,
 			'`' => Instruction::GreaterThan,
+			'&' => Instruction::And,
+			'|' => Instruction::Or,
 			'!' => Instruction::Invert,
 			'"' => Instruction::StringMode,
 			'_' => Instruction::Input,
-			'|' => Instruction::Skip,
 			'$' => Instruction::PrintChar,
 			'#' => Instruction::PrintNumber,
 			'p' => Instruction::PrintAll,

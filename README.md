@@ -84,9 +84,9 @@ Ideally the max value would be greater than or equal to the number of columns, s
 | `~` | Pop value `a` and set the remote stack to the `a`th column's stack.                                                              |
 | `^` | Pop value `a` from the *local* stack and push to the *remote* stack.                                                             |
 | `v` | Pop value `a` from the *remote* stack and push to the *local* stack.                                                             |
-| `&` | Discard the top value of the local stack.                                                                                        |
 | `\` | Swap the top two values of the local stack.                                                                                      |
 | `:` | Duplicate the top value of the local stack (peek + push).                                                                        |
+| `x` | Discard the top value of the local stack.                                                                                        |
 | `c` | Clear the local stack.                                                                                                           |
 | `s` | Swap the local and remote stacks.                                                                                                |
 | `r` | Reverse the order of the local stack.                                                                                            |
@@ -100,12 +100,13 @@ Ideally the max value would be greater than or equal to the number of columns, s
 | `/` | Pop values `a` and `b` and push the integer result of `b` divided by `a`. If `a` is zero, then zero will be pushed to the stack. |
 | `%` | Pop values `a` and `b` and push the remainder of the integer division of `b` divided by `a`.                                     |
 | `=` | Pop values `a` and `b`, and push one if `a` equals `b`, and zero otherwise.                                                      |
-|`` ` ``| Pop values `a` and `b` and push one if `b` is greater than `a`, and zero otherwise.                                            |
+|`` ` ``| Pop values `a` and `b` and push one if `b` is greater than `a`, and zero otherwise.       |                                    
+| `&` | Pop values `a` and `b` and push one if they're both non-zero, and push zero otherwise. Not a bitwise AND.                 .      |
+| `\|` | Pop values `a` and `b` and push one if at least one is non-zero, and push zero if they are both zero. Not a bitwise OR.         |
 | `!` | Invert the top value of the local stack. If it's zero, push one, and if it's non-zero, push zero.                                |
 | `?` | TODO random                                                                                                                      |
 | `"` | Toggle string mode and push UTF-8 values until next `"`.                                                                         |
 | `_` | Pop UTF-8 char from user input and push to the stack. If no more are available, push zero.                                       |
-|`\|` | Skip the following instruction.                                                                                                  |
 | `$` | Pop `a` and print its UTF-8 value.                                                                                               |
 | `#` | Pop `a` and print its numeric value.                                                                                             |
 | `p` | Print all values in stack (from top to bottom) as UTF-8 characters.                                                              |

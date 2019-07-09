@@ -1,8 +1,6 @@
 use crate::parser::Instruction;
 use std::io::{Read, Write};
 use crate::stack::{Stack, VecStack};
-use std::time::Duration;
-use std::thread;
 
 #[derive(Default)]
 pub struct Interpreter<'a> {
@@ -20,8 +18,6 @@ pub struct Interpreter<'a> {
 	remote_column: u32,
 	/// Whether or not the interpreter is in string mode
 	is_string_mode: bool,
-	/// Whether or not the next instruction will be skipped
-	skip_next: bool,
 	/// Instruction pointer
 	ip: u32,
 }
@@ -59,11 +55,14 @@ impl<'a> Interpreter<'a> {
 	pub fn run(&mut self) -> std::io::Result<()> {
 		self.ip = 0;
 
-		while {
-			// keep stepping until terminated
-			thread::sleep(Duration::from_millis(50));
-			self.step()? != InterpreterState::Terminated
-		} {}
+		let mut steps = 0;
+
+		// keep stepping until terminated
+		while self.step()? != InterpreterState::Terminated {
+			steps += 1;
+		}
+
+		println!("Completed in {} steps", steps);
 
 		Ok(())
 	}
@@ -117,12 +116,6 @@ impl<'a> Interpreter<'a> {
 	/// Perform one program step
 	fn step(&mut self) -> std::io::Result<InterpreterState> {
 		let line = self.current_line();
-
-		// handle special skip mode
-		if self.skip_next {
-			self.skip_next = false;
-			return Ok(InterpreterState::Alive);
-		}
 
 		// string mode stuff
 		let state = if self.is_string_mode {
@@ -212,9 +205,6 @@ impl<'a> Interpreter<'a> {
 					local_stack.push(remote_stack.unwrap().pop());
 				}
 			},
-			Instruction::Discard => {
-				local_stack.pop();
-			},
 			Instruction::SwapTop => {
 				let (a, b) = local_stack.pop2();
 				local_stack.push(a);
@@ -222,6 +212,9 @@ impl<'a> Interpreter<'a> {
 			},
 			Instruction::DuplicateTop => {
 				local_stack.push(local_stack.peek())
+			},
+			Instruction::Discard => {
+				local_stack.pop();
 			},
 			Instruction::Clear => {
 				local_stack.clear();
@@ -281,6 +274,14 @@ impl<'a> Interpreter<'a> {
 				let (a, b) = local_stack.pop2();
 				local_stack.push((b > a) as u32);
 			},
+			Instruction::And => {
+				let (a, b) = local_stack.pop2();
+				local_stack.push((a != 0 && b != 0) as u32);
+			},
+			Instruction::Or => {
+				let (a, b) = local_stack.pop2();
+				local_stack.push((a != 0 || b != 0) as u32);
+			},
 			Instruction::Invert => {
 				if local_stack.pop() == 0 {
 					local_stack.push(1);
@@ -298,9 +299,6 @@ impl<'a> Interpreter<'a> {
 
 					local_stack.push(buffer[0] as u32);
 				}
-			},
-			Instruction::Skip => {
-				self.skip_next = true;
 			},
 			Instruction::PrintChar => {
 				if let Some(writer) = &mut self.writer {
