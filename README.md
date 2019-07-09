@@ -2,7 +2,7 @@
 
 `col` is an esoteric programming language inspired by classical architectural columns and the syntax of other esolangs like [Befunge](https://esolangs.org/wiki/Befunge) and [Brainfuck](https://esolangs.org/wiki/Brainfuck).
 
-Both instruction sets and the memory stacks are written in columns. Each column can perform a variety of operations on its own stack, as well as push and pop to/from another column's stack. Below is a more visual representation of this general structure. The finite source code is written at "base" of the column, while the memory stack of each column spans the shaft (length).
+Both instruction sets and the memory stacks are interpreted as columns. Each column can perform a variety of operations on its own stack, as well as push and pop to/from another column's stack. Below is a more visual representation of this general structure. The finite source code is written at "base" of the column, while the memory stack of each column spans the shaft (length).
 
 ```
          ┌─ #4
@@ -13,9 +13,9 @@ Both instruction sets and the memory stacks are written in columns. Each column 
  2   5   v   1
  1   3       0               1) Instructions are executed
  0   1   6   1  <- #2           from top to bottom
-─── ─── ─── ─── ...          2) Bottom of stack                
+─── ─── ─── ─── ...          2) Bottom of memory stack                
  a   d   g   j  <- #1        3) Column currently being executed
- b   e   h   k               4) Selected remote stack          
+ b   e   h   k               4) Selected remote memory stack          
  c   f   i   l
 
      ^
@@ -31,17 +31,21 @@ ghi
 jkl
 ```
 
-Because any column may modify another column's stack, there are really no assurances of immutability or privacy. In "traditional" programming, this would be terrifying, but it's an intentional design choice here. By not restricting the accessibility of memory *but* still defining clear associations between instruction sets and their memory, interesting solutions emerge. Furthermore, "functions" (instruction sets) may have memory that persists longer than a single call.
+An interpreter is currently being written in Rust.
 
-`col` is not designed to to be a "good" programming language. It's nothing more than a fun experiment that encourages the programmer to break out of traditional habits and invent alternative ways of solving problems. I hope you enjoy playing around with it :)
+## Theory
 
-I'm in the process of writing an interpreter in Rust.
+`col` is not designed to to be a "good" programming language. Instead, it attempts to disrupt typical programming paradigms enough that an experienced programmer may have to stop and think periodically. Here are a couple of the main points regarding its implications:
+
+There aren't clear assurances of immutability or privacy as any column may read and/or modify another column's stack. In traditional programming, this would be dangerous, but it's an intentional design choice in `col`. The accessibility of memory is unrestricted, but there are still clearly defined associations between instructions sets and their memory.
+
+Furthermore, "functions" (instruction sets) may have memory that persists longer than a single execution. The programmer may choose to clear the memory stack as if it's scoped, or allow it to persist through future calls, or a hybrid of both. As a result, the line between persistent and ephemeral memory is blurred.
 
 ## Specification
 
 ### Rules
 
-- Space and tab characters are ignored.
+- Whitespace is ignored, except in string mode.
 - There are a finite number of columns, defined by the source. Each has a finite instruction set and a memory stack of no official max capacity (depends on implementation).
 - Lines (separated by line feeds) represent columns, where the line index maps to the column index (e.g. first line is column \#0). Leading and trailing empty lines are ignored.
 - When an instruction stack has completed execution, it repeats.
