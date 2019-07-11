@@ -45,7 +45,6 @@ impl<'a> Interpreter<'a> {
 		self.source = program.lines().collect();
 
 		let num_columns = program.lines().count();
-
 		self.stacks = vec![VecStack::default(); num_columns];
 
 		self
@@ -146,20 +145,19 @@ impl<'a> Interpreter<'a> {
 			self.execute_instruction(instr.unwrap())?
 		};
 
-		return Ok(state);
-	}
-
-	fn execute_instruction(&mut self, instruction: Instruction) -> std::io::Result<InterpreterState> {
-		// expand if need be
-		// TODO this should probably be better?
+		// expand memory columns if need be
+		// TODO clean up unused
 		if self.remote_column >= self.stacks.len() as u32 {
-			let num_to_add = self.stacks.len() - self.remote_column as usize + 1;
-			println!("Adding {}", num_to_add);
+			let num_to_add = self.remote_column as usize - self.stacks.len() + 1;
 			for _ in 0..num_to_add {
 				self.stacks.push(VecStack::default());
 			}
 		}
 
+		return Ok(state);
+	}
+
+	fn execute_instruction(&mut self, instruction: Instruction) -> std::io::Result<InterpreterState> {
 		// TODO scary iter_mut stuff to appease the borrow checker
 
 		let stacks_mut = self.stacks.iter_mut();

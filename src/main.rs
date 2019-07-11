@@ -24,5 +24,7 @@ fn main() {
 	let mut stdout = stdout();
 	let mut stdin = stdin();
 
-	Interpreter::new(&program, &mut stdin, &mut stdout).run().expect("An unexpected I/O error occurred.");
+	Interpreter::new(&program, &mut stdin, &mut stdout)
+		.run()
+		.expect("An unexpected I/O error occurred.");
 }
