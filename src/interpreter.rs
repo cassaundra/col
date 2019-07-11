@@ -1,5 +1,5 @@
 use crate::parser::Instruction;
-use std::io::{Read, Write};
+use std::io::{Write, Read};
 use crate::stack::{Stack, VecStack};
 
 #[derive(Default)]
@@ -55,14 +55,12 @@ impl<'a> Interpreter<'a> {
 	pub fn run(&mut self) -> std::io::Result<()> {
 		self.ip = 0;
 
-		let mut steps = 0;
+//		let mut steps = 0;
 
 		// keep stepping until terminated
 		while self.step()? != InterpreterState::Terminated {
-			steps += 1;
+//			steps += 1;
 		}
-
-		println!("Completed in {} steps", steps);
 
 		Ok(())
 	}
@@ -136,6 +134,8 @@ impl<'a> Interpreter<'a> {
 		} else {
 			let mut instr = None;
 
+			// TODO trim out invalid characters?
+
 			// find the next valid instruction
 			while instr == None {
 				instr = line.chars().nth(self.ip as usize).and_then(|c| Instruction::from_char(&c));
@@ -150,7 +150,15 @@ impl<'a> Interpreter<'a> {
 	}
 
 	fn execute_instruction(&mut self, instruction: Instruction) -> std::io::Result<InterpreterState> {
-		let num_columns = self.stacks.len() as u32;
+		// expand if need be
+		// TODO this should probably be better?
+		if self.remote_column >= self.stacks.len() as u32 {
+			let num_to_add = self.stacks.len() - self.remote_column as usize + 1;
+			println!("Adding {}", num_to_add);
+			for _ in 0..num_to_add {
+				self.stacks.push(VecStack::default());
+			}
+		}
 
 		// TODO scary iter_mut stuff to appease the borrow checker
 
@@ -173,15 +181,12 @@ impl<'a> Interpreter<'a> {
 
 		match instruction {
 			Instruction::PushLeftIndex => {
-				let pos = self.local_column.checked_sub(1);
+				let pos = self.local_column.wrapping_sub(1);
 
-				match pos {
-					Some(pos) => local_stack.push(pos),
-					None => local_stack.push(num_columns - 1),
-				}
+				local_stack.push(pos);
 			},
 			Instruction::PushRightIndex => {
-				let pos = self.local_column.wrapping_add(1) % num_columns;
+				let pos = self.local_column.wrapping_add(1);
 
 				local_stack.push(pos);
 			},
@@ -189,11 +194,11 @@ impl<'a> Interpreter<'a> {
 				local_stack.push(self.local_column);
 			},
 			Instruction::SetLocalColumn => {
-				self.local_column = local_stack.pop() % num_columns;
+				self.local_column = local_stack.pop() % self.stacks.len() as u32;
 				self.ip = 0; // we'll begin executing here
 			}
 			Instruction::SetRemoteStack => {
-				self.remote_column = local_stack.pop() % num_columns;
+				self.remote_column = local_stack.pop();
 			},
 			Instruction::MoveToRemote => {
 				if self.local_column != self.remote_column {
@@ -237,12 +242,12 @@ impl<'a> Interpreter<'a> {
 				local_stack.push(value);
 			},
 			Instruction::LeftBracket => {
-				if local_stack.peek() == 0 {
+				if local_stack.pop() == 0 {
 					self.ip = self.matching_forwards();
 				}
 			},
 			Instruction::RightBracket => {
-				if local_stack.peek() != 0 {
+				if local_stack.pop() != 0 {
 					self.ip = self.matching_backwards();
 				}
 			},
@@ -288,6 +293,9 @@ impl<'a> Interpreter<'a> {
 				} else {
 					local_stack.push(0);
 				}
+			},
+			Instruction::Random => {
+				local_stack.push(rand::random());
 			},
 			Instruction::StringMode => {
 				self.is_string_mode = !self.is_string_mode;

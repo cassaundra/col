@@ -52,6 +52,8 @@ pub enum Instruction {
 	Or,
 	/// Invert the top value of the local stack. If it's `0`, push one, otherwise push `1`;
 	Invert,
+	/// Push a random value to the local stack.
+	Random,
 	/// Toggle string mode. Until a matching "string mode" token is executed, characters will be interpreted as raw values.
 	StringMode,
 	/// Pop a value (interpreted from UTF-8 and push to the stack. If no more are available, push `0`.
@@ -97,13 +99,14 @@ impl Instruction {
 			'&' => Instruction::And,
 			'|' => Instruction::Or,
 			'!' => Instruction::Invert,
+			'?' => Instruction::Random,
 			'"' => Instruction::StringMode,
 			'_' => Instruction::Input,
 			'$' => Instruction::PrintChar,
 			'#' => Instruction::PrintNumber,
 			'p' => Instruction::PrintAll,
 			'@' => Instruction::Terminate,
-			_ => return None
+			_ => return None,
 		})
 	}
 }

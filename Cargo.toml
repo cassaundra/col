@@ -7,6 +7,4 @@ edition = "2018"
 
 [dependencies]
 clap = "2.32.0"
-
-#[[bin]]
-#name = "coli"
+rand = "0.7.0"

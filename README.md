@@ -31,11 +31,13 @@ ghi
 jkl
 ```
 
-An interpreter is currently being written in Rust.
+## Interpreter
+
+This repository contains col's interpreter. Compile it with `cargo build --release`, run the interpreter on a file with `cargo run --release -- file.col`. Check the `--help` for more information.
 
 ## Theory
 
-`col` is not designed to to be a "good" programming language. Instead, it attempts to disrupt typical programming paradigms enough that an experienced programmer may have to stop and think periodically. Here are a couple of the main points regarding its implications:
+`col` is not designed to to be a easy-to-use programming language. Instead, it attempts to disrupt typical programming paradigms enough that even an experienced programmer would have to stop and think. Here are a couple of the main points regarding its implications:
 
 There aren't clear assurances of immutability or privacy as any column may read and/or modify another column's stack. In traditional programming, this would be dangerous, but it's an intentional design choice in `col`. The accessibility of memory is unrestricted, but there are still clearly defined associations between instructions sets and their memory.
 
@@ -100,11 +102,11 @@ Ideally the max value would be greater than or equal to the number of columns, s
 | `/` | Pop values `a` and `b` and push the integer result of `b` divided by `a`. If `a` is zero, then zero will be pushed to the stack. |
 | `%` | Pop values `a` and `b` and push the remainder of the integer division of `b` divided by `a`.                                     |
 | `=` | Pop values `a` and `b`, and push one if `a` equals `b`, and zero otherwise.                                                      |
-|`` ` ``| Pop values `a` and `b` and push one if `b` is greater than `a`, and zero otherwise.       |                                    
+|`` ` ``| Pop values `a` and `b` and push one if `b` is greater than `a`, and zero otherwise.                                            |
 | `&` | Pop values `a` and `b` and push one if they're both non-zero, and push zero otherwise. Not a bitwise AND.                 .      |
 | `\|` | Pop values `a` and `b` and push one if at least one is non-zero, and push zero if they are both zero. Not a bitwise OR.         |
 | `!` | Invert the top value of the local stack. If it's zero, push one, and if it's non-zero, push zero.                                |
-| `?` | TODO random                                                                                                                      |
+| `?` | Push a random value to the local stack                                                                                           |
 | `"` | Toggle string mode and push UTF-8 values until next `"`.                                                                         |
 | `_` | Pop UTF-8 char from user input and push to the stack. If no more are available, push zero.                                       |
 | `$` | Pop `a` and print its UTF-8 value.                                                                                               |
