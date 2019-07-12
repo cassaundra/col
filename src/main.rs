@@ -6,7 +6,7 @@ use clap::{App, Arg, crate_version, crate_authors, crate_description};
 
 mod parser;
 mod interpreter;
-mod stack;
+mod program;
 
 fn main() {
 	let matches = App::new("col")

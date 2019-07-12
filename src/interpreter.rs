@@ -1,6 +1,13 @@
-use crate::parser::Instruction;
+use std::cell::RefMut;
 use std::io::{Write, Read};
-use crate::stack::{Stack, VecStack};
+
+use crate::parser::Instruction;
+use crate::program::{Stack, VecStack};
+use crate::program::ProgramState;
+
+/// How often automatic garbage collection will occur.
+/// The counter should be reset after manual memory cleanups.
+const GC_STEPS: u32 = 512;
 
 #[derive(Default)]
 pub struct Interpreter<'a> {
@@ -11,7 +18,7 @@ pub struct Interpreter<'a> {
 	/// Program output
 	writer: Option<&'a mut dyn Write>,
 	/// The memory stacks
-	stacks: Vec<VecStack>,
+	state: ProgramState,
 	/// The index of the current local column
 	local_column: u32,
 	/// The index of the current remote column
@@ -22,10 +29,18 @@ pub struct Interpreter<'a> {
 	ip: u32,
 }
 
-#[derive(PartialEq)]
-enum InterpreterState {
-	Alive,
-	Terminated,
+/// Result from an execution step
+struct StepResponse {
+	/// Is the program still alive after this step?
+	is_alive: bool,
+	/// Should
+	should_adjust_mem: bool,
+}
+
+impl Default for StepResponse {
+	fn default() -> Self {
+		StepResponse { is_alive: true, should_adjust_mem: false }
+	}
 }
 
 impl<'a> Interpreter<'a> {
@@ -43,10 +58,6 @@ impl<'a> Interpreter<'a> {
 
 	fn load_source(&mut self, program: &'a str) -> &mut Self {
 		self.source = program.lines().collect();
-
-		let num_columns = program.lines().count();
-		self.stacks = vec![VecStack::default(); num_columns];
-
 		self
 	}
 
@@ -54,18 +65,28 @@ impl<'a> Interpreter<'a> {
 	pub fn run(&mut self) -> std::io::Result<()> {
 		self.ip = 0;
 
-//		let mut steps = 0;
+		let mut gc_count = 0;
 
 		// keep stepping until terminated
-		while self.step()? != InterpreterState::Terminated {
-//			steps += 1;
-		}
+		while {
+			let result = self.step()?;
+
+			// do garbage collection/manual mem adjustment
+			if gc_count >= GC_STEPS - 1 || result.should_adjust_mem {
+				gc_count = 0;
+				self.state.adjust_memory(&(self.source.len() as u32), &self.remote_column);
+			} else {
+				gc_count += 1;
+			}
+
+			result.is_alive
+		} {}
 
 		Ok(())
 	}
 
-	fn current_line(&self) -> String {
-		self.source[self.local_column as usize].to_owned()
+	fn current_line(&self) -> &'a str {
+		self.source[self.local_column as usize]
 	}
 
 	/// Find the matching right bracket forwards
@@ -111,25 +132,25 @@ impl<'a> Interpreter<'a> {
 	}
 
 	/// Perform one program step
-	fn step(&mut self) -> std::io::Result<InterpreterState> {
+	fn step(&mut self) -> std::io::Result<StepResponse> {
+		let mut step_result = StepResponse::default();
+
 		let line = self.current_line();
 
 		// string mode stuff
-		let state = if self.is_string_mode {
+		if self.is_string_mode {
 			let c = line.chars().nth(self.ip as usize);
 			let instr = c.and_then(|c| Instruction::from_char(&c));
 
-			// prioritize exiting strng mode
+			// prioritize exiting string mode
 			if instr == Some(Instruction::StringMode) {
 				self.is_string_mode = false;
 			} else if let Some(c) = c {
 				// push a raw value to the stack
-				self.stacks[self.local_column as usize].push(c as u32); // TODO is this a safe cast?
+				self.state.nth(self.local_column).unwrap().borrow_mut().push(c as u32);
 			}
 
 			self.increment_ip();
-
-			InterpreterState::Alive // cool no matter what (:
 		} else {
 			let mut instr = None;
 
@@ -142,70 +163,51 @@ impl<'a> Interpreter<'a> {
 			}
 
 			// execute and pass on result
-			self.execute_instruction(instr.unwrap())?
+			self.execute_instruction(instr.unwrap(), &mut step_result)?;
 		};
 
-		// expand memory columns if need be
-		// TODO clean up unused
-		if self.remote_column >= self.stacks.len() as u32 {
-			let num_to_add = self.remote_column as usize - self.stacks.len() + 1;
-			for _ in 0..num_to_add {
-				self.stacks.push(VecStack::default());
-			}
-		}
-
-		return Ok(state);
+		return Ok(step_result);
 	}
 
-	fn execute_instruction(&mut self, instruction: Instruction) -> std::io::Result<InterpreterState> {
-		// TODO scary iter_mut stuff to appease the borrow checker
-
-		let stacks_mut = self.stacks.iter_mut();
-
-		let mut local_stack = None;
-		let mut remote_stack = None;
-
-		for (i, stack) in stacks_mut.enumerate() {
-			let i = i as u32;
-
-			if i == self.local_column {
-				local_stack = Some(stack);
-			} else if i == self.remote_column {
-				remote_stack = Some(stack);
-			}
-		}
-
-		let local_stack = local_stack.unwrap();
+	fn execute_instruction(&mut self, instruction: Instruction, step_result: &mut StepResponse) -> std::io::Result<()> {
+		// TODO this really doesn't need to be done each iteration
+		// *but* it does simplify execution flow, so we'll keep it here until it becomes a problem
+		let mut local_stack = self.state.nth(self.local_column).unwrap().borrow_mut();
+		let mut remote_stack: Option<RefMut<VecStack>> = self.state.nth(self.local_column)
+			.and_then(|v| {
+				Some(v.borrow_mut())
+			});
 
 		match instruction {
 			Instruction::PushLeftIndex => {
 				let pos = self.local_column.wrapping_sub(1);
-
 				local_stack.push(pos);
 			},
 			Instruction::PushRightIndex => {
 				let pos = self.local_column.wrapping_add(1);
-
 				local_stack.push(pos);
 			},
 			Instruction::PushCurrentIndex => {
 				local_stack.push(self.local_column);
 			},
 			Instruction::SetLocalColumn => {
-				self.local_column = local_stack.pop() % self.stacks.len() as u32;
+				self.local_column = local_stack.pop() % self.source.len() as u32;
 				self.ip = 0; // we'll begin executing here
 			}
 			Instruction::SetRemoteStack => {
 				self.remote_column = local_stack.pop();
+
+				// this will ensure the stack is available the next iteration
+				step_result.should_adjust_mem = true;
 			},
 			Instruction::MoveToRemote => {
-				if self.local_column != self.remote_column {
-					remote_stack.unwrap().push(local_stack.pop());
+				if let Some(remote_stack) = &mut remote_stack { // redundant otherwise
+					remote_stack.push(local_stack.pop());
 				}
 			},
 			Instruction::MoveToLocal => {
-				if self.local_column != self.remote_column {
-					local_stack.push(remote_stack.unwrap().pop());
+				if let Some(remote_stack) = &mut remote_stack { // redundant otherwise
+					local_stack.push(remote_stack.pop());
 				}
 			},
 			Instruction::SwapTop => {
@@ -214,7 +216,8 @@ impl<'a> Interpreter<'a> {
 				local_stack.push(b);
 			},
 			Instruction::DuplicateTop => {
-				local_stack.push(local_stack.peek())
+				let value = local_stack.peek();
+				local_stack.push(value);
 			},
 			Instruction::Discard => {
 				local_stack.pop();
@@ -223,9 +226,7 @@ impl<'a> Interpreter<'a> {
 				local_stack.clear();
 			},
 			Instruction::SwapStacks => {
-				if self.local_column != self.remote_column {
-					let remote_stack = remote_stack.unwrap();
-
+				if let Some(remote_stack) = &mut remote_stack {
 					let local_values = local_stack.values().clone();
 					let remote_values = remote_stack.values().clone();
 
@@ -329,10 +330,10 @@ impl<'a> Interpreter<'a> {
 				}
 			},
 			Instruction::Terminate => {
-				return Ok(InterpreterState::Terminated);
+				step_result.is_alive = false;
 			},
 		};
 
-		return Ok(InterpreterState::Alive);
+		Ok(())
 	}
 }
