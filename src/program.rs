@@ -7,6 +7,15 @@ pub struct ProgramState {
 }
 
 impl ProgramState {
+	pub fn new(initial_count: u32) -> Self {
+		let mut stacks = HashMap::new();
+
+		for i in 0..initial_count {
+			stacks.insert(i, RefCell::new(VecStack::default()));
+		}
+
+		ProgramState { stacks }
+	}
 	pub fn nth(&self, index: u32) -> Option<&RefCell<VecStack>> {
 		self.stacks.get(&index)
 	}

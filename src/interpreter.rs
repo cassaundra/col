@@ -58,6 +58,7 @@ impl<'a> Interpreter<'a> {
 
 	fn load_source(&mut self, program: &'a str) -> &mut Self {
 		self.source = program.lines().collect();
+		self.state = ProgramState::new(self.source.len() as u32);
 		self
 	}
 
@@ -174,6 +175,7 @@ impl<'a> Interpreter<'a> {
 		// *but* it does simplify execution flow, so we'll keep it here until it becomes a problem
 		let mut local_stack = self.state.nth(self.local_column).unwrap().borrow_mut();
 		let mut remote_stack: Option<RefMut<VecStack>> = self.state.nth(self.local_column)
+			.filter(|_| self.local_column != self.remote_column) // avoid a BorrowMutError
 			.and_then(|v| {
 				Some(v.borrow_mut())
 			});
