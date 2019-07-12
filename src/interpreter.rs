@@ -64,8 +64,6 @@ impl<'a> Interpreter<'a> {
 
 	/// Executes the program until it terminates.
 	pub fn run(&mut self) -> std::io::Result<()> {
-		self.ip = 0;
-
 		let mut gc_count = 0;
 
 		// keep stepping until terminated
@@ -106,6 +104,7 @@ impl<'a> Interpreter<'a> {
 		where I: Iterator<Item = u32> {
 		let line = self.current_line();
 
+		// depth of other bracket pairs, 0 is top-level
 		let mut depth = 0;
 
 		for i in iter {
@@ -173,7 +172,7 @@ impl<'a> Interpreter<'a> {
 	fn execute_instruction(&mut self, instruction: Instruction, step_result: &mut StepResponse) -> std::io::Result<()> {
 		// TODO this really doesn't need to be done each iteration
 		// *but* it does simplify execution flow, so we'll keep it here until it becomes a problem
-		let mut local_stack = self.state.nth(self.local_column).unwrap().borrow_mut();
+		let mut local_stack: RefMut<VecStack> = self.state.nth(self.local_column).unwrap().borrow_mut();
 		let mut remote_stack: Option<RefMut<VecStack>> = self.state.nth(self.local_column)
 			.filter(|_| self.local_column != self.remote_column) // avoid a BorrowMutError
 			.and_then(|v| {

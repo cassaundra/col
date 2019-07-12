@@ -22,7 +22,8 @@ impl ProgramState {
 
 	pub fn adjust_memory(&mut self, program_defined: &u32, remote_index: &u32) {
 		// insert a stack at the remote column if one does not exist already
-		self.stacks.entry(*remote_index).or_insert(RefCell::new(VecStack::default()));
+		self.stacks.entry(*remote_index)
+			.or_insert(RefCell::new(VecStack::default()));
 
 		// remove empty stacks that aren't being used by the program or the remote stack.
 		// we could also use a queuing system that delays the removal, but I don't think allocating
@@ -84,6 +85,7 @@ impl Stack for VecStack {
 	}
 }
 
+// TODO do we need other implementations?
 pub trait Stack {
 	fn values(&self) -> &Vec<u32>;
 	fn push(&mut self, value: u32);
