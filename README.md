@@ -94,8 +94,8 @@ Ideally the max value would be greater than or equal to the number of columns, s
 | `r` | Reverse the order of the local stack.                                                                                            |
 |`0-9`| Push a number value to the stack (*not* the UTF-8 value of the digit).                                                           |
 |`A-F`| Push a number value to the stack from hexadecimal (decimal 10-15).                                                               | 
-| `[` | Skip past the matching `]` if popped value `a` is zero. If none found, then the IP will return to the start.                     |
-| `]` | Skip back to after the matching `[` if popped value `a` is non-zero. If none found, then the IP will return to the start.        |
+| `[` | Skip past the matching `]` if the top value (peek) `a` is zero. If none found, then the IP will return to the start.             |
+| `]` | Skip back to after the matching `[` if top value (peek) `a` is non-zero. If none found, then the IP will return to the start.        |
 | `+` | Pop values `a` and `b` and push the result of `a` plus `b`.                                                                      |
 | `-` | Pop values `a` and `b` and push the result of `b` minus `a`.                                                                     |
 | `*` | Pop values `a` and `b` and push the result of `a` times `b`.                                                                     |
@@ -120,4 +120,11 @@ Ideally the max value would be greater than or equal to the number of columns, s
 
 ```
 "Hello, world!"rp@
+```
+
+**Fibonacci:**
+```
+>;
+11#>;
+A$0~v1~v0~:^+::1~^#
 ```

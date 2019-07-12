@@ -243,12 +243,12 @@ impl<'a> Interpreter<'a> {
 				local_stack.push(value);
 			},
 			Instruction::LeftBracket => {
-				if local_stack.pop() == 0 {
+				if local_stack.peek() == 0 {
 					self.ip = self.matching_forwards();
 				}
 			},
 			Instruction::RightBracket => {
-				if local_stack.pop() != 0 {
+				if local_stack.peek() != 0 {
 					self.ip = self.matching_backwards();
 				}
 			},
