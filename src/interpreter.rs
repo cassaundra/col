@@ -173,7 +173,7 @@ impl<'a> Interpreter<'a> {
 		// TODO this really doesn't need to be done each iteration
 		// *but* it does simplify execution flow, so we'll keep it here until it becomes a problem
 		let mut local_stack: RefMut<VecStack> = self.state.nth(self.local_column).unwrap().borrow_mut();
-		let mut remote_stack: Option<RefMut<VecStack>> = self.state.nth(self.local_column)
+		let mut remote_stack: Option<RefMut<VecStack>> = self.state.nth(self.remote_column)
 			.filter(|_| self.local_column != self.remote_column) // avoid a BorrowMutError
 			.and_then(|v| {
 				Some(v.borrow_mut())
