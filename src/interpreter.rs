@@ -199,7 +199,9 @@ impl<'a> Interpreter<'a> {
 				self.remote_column = local_stack.pop();
 
 				// this will ensure the stack is available the next iteration
-				step_result.should_adjust_mem = true;
+				if self.remote_column >= self.source.len() {
+					step_result.should_adjust_mem = true;
+				}
 			},
 			Instruction::MoveToRemote => {
 				if let Some(remote_stack) = &mut remote_stack { // redundant otherwise
