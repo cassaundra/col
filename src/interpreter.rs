@@ -45,13 +45,13 @@ impl Default for StepResponse {
 
 impl<'a> Interpreter<'a> {
 	/// Create a new col interpreter from a program
-	pub fn new<R: Read, W: Write>(program: &'a str, reader: &'a mut R, writer: &'a mut W) -> Self {
+	pub fn new(program: &'a str, reader: Option<&'a mut dyn Read>, writer: Option<&'a mut dyn Write>) -> Self {
 		let mut interpeter = Self::default();
 
 		interpeter.load_source(program);
 
-		interpeter.reader = Some(reader);
-		interpeter.writer = Some(writer);
+		interpeter.reader = reader;
+		interpeter.writer = writer;
 
 		interpeter
 	}
