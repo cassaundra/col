@@ -2,7 +2,7 @@
 
 `col` is an esoteric programming language inspired by classical architectural columns and the syntax of other esolangs like [Befunge](https://esolangs.org/wiki/Befunge) and [Brainfuck](https://esolangs.org/wiki/Brainfuck).
 
-Both instruction sets and the memory stacks are interpreted as columns. Each column can perform a variety of operations on its own stack, as well as push and pop to/from another column's stack. Below is a more visual representation of this general structure. The finite source code is written at "base" of the column, while the memory stack of each column spans the shaft (length).
+Both the instruction sets and the memory stacks are interpreted as columns. Each column can perform a variety of operations on its own stack, as well as push and pop to/from another column's stack. Below is a more visual representation of this general structure. The finite source code is written at "base" of the column, while the memory stack of each column spans the shaft (length).
 
 ```
          ┌─ #4
@@ -37,21 +37,21 @@ This repository contains col's interpreter. Compile it with `cargo build --relea
 
 ## Theory
 
-`col` is not designed to to be a easy-to-use programming language. Instead, it attempts to disrupt typical programming paradigms enough that even an experienced programmer would have to stop and think. Here are a couple of the main points regarding its implications:
+`col` is not designed to be easy-to-use. At its best, it disrupts common programming paradigms to make the programmer have to stop and think more frequently. Here are a couple of interesting notes on its implications:
 
 There aren't clear assurances of immutability or privacy as any column may read and/or modify another column's stack. In traditional programming, this would be dangerous, but it's an intentional design choice in `col`. The accessibility of memory is unrestricted, but there are still clearly defined associations between instructions sets and their memory.
 
-Furthermore, "functions" (instruction sets) may have memory that persists longer than a single execution. The programmer may choose to clear the memory stack as if it's scoped, or allow it to persist through future calls, or a hybrid of both. As a result, the line between persistent and ephemeral memory is blurred.
+Furthermore, "functions" (instruction sets) may have memory that persists longer than a single execution. The programmer may choose to clear the memory stack as if it's scoped, or allow it to persist through future iterations, or a hybrid of both. As a result, the line between persistent and ephemeral memory is blurred.
 
 ## Specification
 
 ### Rules
 
-- Whitespace and undefined characters are ignored by the interpreter.
-- There are a finite number of columns, defined by the source. Each has a finite instruction set and a memory stack of no official max capacity (depends on implementation).
-- Lines (separated by line feeds) represent columns, where the line index maps to the column index (e.g. first line is column \#0). Leading and trailing empty lines are ignored.
 - When an instruction stack has completed execution, it repeats.
 - Each column may switch its "remote" stack, which is by default itself (so `^`, `v`, and `s` yield no change).
+- There are a finite number of executable columns as defined by the program source. However, you may use any remote column as a memory stack, *even if there is not a corresponding line in the source*.
+- Lines (separated by line feeds) represent columns, where the line index maps to the column index (e.g. first line is column \#0). Leading and trailing empty lines are ignored.
+- Undefined characters (including whitespace) are ignored by the interpreter unless in string mode.
 - The columns are organized conceptually as a circle, wrapping at either end.
 - The runtime user's input is also represented as a stack.
 - If any operation cannot be performed, the value zero is used instead.
@@ -95,7 +95,7 @@ Ideally the max value would be greater than or equal to the number of columns, s
 |`0-9`| Push a number value to the stack (*not* the UTF-8 value of the digit).                                                           |
 |`A-F`| Push a number value to the stack from hexadecimal (decimal 10-15).                                                               | 
 | `[` | Skip past the matching `]` if the top value (peek) `a` is zero. If none found, then the IP will return to the start.             |
-| `]` | Skip back to after the matching `[` if top value (peek) `a` is non-zero. If none found, then the IP will return to the start.        |
+| `]` | Skip back to after the matching `[` if top value (peek) `a` is non-zero. If none found, then the IP will return to the start.    |
 | `+` | Pop values `a` and `b` and push the result of `a` plus `b`.                                                                      |
 | `-` | Pop values `a` and `b` and push the result of `b` minus `a`.                                                                     |
 | `*` | Pop values `a` and `b` and push the result of `a` times `b`.                                                                     |
@@ -103,8 +103,8 @@ Ideally the max value would be greater than or equal to the number of columns, s
 | `%` | Pop values `a` and `b` and push the remainder of the integer division of `b` divided by `a`.                                     |
 | `=` | Pop values `a` and `b`, and push one if `a` equals `b`, and zero otherwise.                                                      |
 |`` ` ``| Pop values `a` and `b` and push one if `b` is greater than `a`, and zero otherwise.                                            |
-| `&` | Pop values `a` and `b` and push one if they're both non-zero, and push zero otherwise. Not a bitwise AND.                 .      |
-| `\|` | Pop values `a` and `b` and push one if at least one is non-zero, and push zero if they are both zero. Not a bitwise OR.         |
+| `&` | Pop values `a` and `b` and push one if they're both non-zero, and push zero otherwise. Not a bitwise AND.                        |
+|`\|` | Pop values `a` and `b` and push one if at least one is non-zero, and push zero if they are both zero. Not a bitwise OR.          |
 | `!` | Invert the top value of the local stack. If it's zero, push one, and if it's non-zero, push zero.                                |
 | `?` | Push a random value to the local stack                                                                                           |
 | `"` | Toggle string mode and push UTF-8 values until next `"`.                                                                         |
@@ -119,7 +119,7 @@ Ideally the max value would be greater than or equal to the number of columns, s
 **Hello world:**
 
 ```
-"Hello, world!"rp@
+"Hello, world!"Arp@
 ```
 
 **Fibonacci:**
