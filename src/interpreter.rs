@@ -7,7 +7,7 @@ use crate::program::ProgramState;
 
 /// How often automatic garbage collection will occur.
 /// The counter should be reset after manual memory cleanups.
-const GC_STEPS: u32 = 512;
+const GC_STEPS: u32 = 2048;
 
 #[derive(Default)]
 pub struct Interpreter<'a> {
@@ -199,7 +199,7 @@ impl<'a> Interpreter<'a> {
 				self.remote_column = local_stack.pop();
 
 				// this will ensure the stack is available the next iteration
-				if self.remote_column >= self.source.len() {
+				if self.remote_column >= self.source.len() as u32 {
 					step_result.should_adjust_mem = true;
 				}
 			},

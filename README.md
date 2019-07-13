@@ -128,3 +128,16 @@ Ideally the max value would be greater than or equal to the number of columns, s
 11#>;
 A$0~v1~v0~:^+::1~^#
 ```
+
+## TODO
+
+Interpreter:
+- Improve performance, I/O is a notable bottleneck
+- Improve garbage collection. Current implementation is a naive placeholder
+- Add more command line options
+    - Verbose mode
+    - Step-by-step debug (visualizer?)
+    - Optional step delay
+    - Specify I/O streams
+- API?
+- Add more unit tests

@@ -33,12 +33,8 @@ impl ProgramState {
 				return !stack.borrow().is_empty(); // remove only if empty
 			}
 
-			return true;
+			return true; // if it's part of the program defined stacks, keep it!
 		});
-	}
-
-	pub fn count(&self) -> usize {
-		self.stacks.len()
 	}
 }
 
