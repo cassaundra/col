@@ -13,8 +13,6 @@ const GC_STEPS: u32 = 2048;
 
 #[derive(Default)]
 pub struct Interpreter<'a> {
-	/// How long to delay between steps in milliseconds
-	pub delay_ms: u64,
 	/// The source of the program
 	source: Vec<&'a str>,
 	/// Program input
@@ -60,14 +58,9 @@ impl<'a> Interpreter<'a> {
 		interpeter
 	}
 
-	fn load_source(&mut self, program: &'a str) -> &mut Self {
-		self.source = program.lines().collect();
-		self.state = ProgramState::new(self.source.len() as u32);
-		self
-	}
-
 	/// Executes the program until it terminates.
-	pub fn run(&mut self) -> std::io::Result<()> {
+	/// Blocking, will return when complete.
+	pub fn run(&mut self, delay_ms: u64) -> std::io::Result<()> {
 		let mut gc_count = 0;
 
 		// keep stepping until terminated
@@ -87,12 +80,18 @@ impl<'a> Interpreter<'a> {
 		} {
 			// we don't even want to call the thread sleep if 0, because
 			// it might still pause the thread for a bit (citation needed)
-			if self.delay_ms != 0 {
-				thread::sleep(Duration::from_millis(self.delay_ms));
+			if delay_ms != 0 {
+				thread::sleep(Duration::from_millis(delay_ms));
 			}
 		}
 
 		Ok(())
+	}
+
+	fn load_source(&mut self, program: &'a str) -> &mut Self {
+		self.source = program.lines().collect();
+		self.state = ProgramState::new(self.source.len() as u32);
+		self
 	}
 
 	fn current_line(&self) -> &'a str {

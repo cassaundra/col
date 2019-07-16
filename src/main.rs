@@ -14,10 +14,12 @@ fn main() {
 		.author(crate_authors!())
 		.about(crate_description!())
 		.arg(Arg::with_name("file")
-			.help("The source file to interpret.")
+			.help("Source file to interpret.")
 			.required(true))
 		.arg(Arg::with_name("step_delay")
-			.help("How many milliseconds to delay between steps")
+			.help("Milliseconds to delay between steps")
+			.takes_value(true)
+			.long("delay")
 			.required(false))
 		.get_matches();
 
@@ -29,10 +31,9 @@ fn main() {
 	let mut stdout = stdout();
 	let mut stdin = stdin();
 
-	let mut interpreter = Interpreter::new(&program, Some(&mut stdin), Some(&mut stdout));
-	interpreter.delay_ms = delay;
-
-	interpreter.run().expect("An I/O error occurred");
+	Interpreter::new(&program, Some(&mut stdin), Some(&mut stdout))
+		.run(delay)
+		.expect("An I/O error occurred");
 }
 
 #[cfg(test)]
