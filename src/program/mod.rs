@@ -1,12 +1,11 @@
 //! Program state.
 
-use std::collections::HashMap;
 use std::cell::RefCell;
 
 pub mod simple;
 pub mod advanced;
 
-pub trait ProgramState {
+pub trait ProgramState: Default {
 	/// Create a new `ProgramState` with an initial number of empty `VecStack`s
 	fn new(initial_count: u32) -> Self;
 

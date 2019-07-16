@@ -8,7 +8,7 @@
 //! let mut stdout = stdout();
 //!	let mut stdin = stdin();
 //!
-//!	Interpreter::new("\"Hello world\"Arp@", Some(&mut stdin), Some(&mut stdout))
+//!	Interpreter::<SimpleProgramState>::new("\"Hello world\"Arp@", Some(&mut stdin), Some(&mut stdout))
 //!		.run(delay)
 //!		.expect("An I/O error occurred");
 //! ```
@@ -19,7 +19,6 @@ use std::io::{Write, Read};
 use crate::parser::Instruction;
 use crate::program::VecStack;
 use crate::program::ProgramState;
-use crate::program::simple::SimpleProgramState;
 
 use std::time::Duration;
 use std::thread;
@@ -62,7 +61,7 @@ impl Default for StepResponse {
 	}
 }
 
-impl<'a> Interpreter<'a, SimpleProgramState> {
+impl<'a, P: ProgramState> Interpreter<'a, P> {
 	/// Create a new col interpreter from a program
 	pub fn new(program: &'a str, reader: Option<&'a mut dyn Read>, writer: Option<&'a mut dyn Write>) -> Self {
 		let mut interpeter = Self::default();
@@ -109,7 +108,7 @@ impl<'a> Interpreter<'a, SimpleProgramState> {
 
 	fn load_source(&mut self, program: &'a str) {
 		self.source = program.lines().collect();
-		self.state = SimpleProgramState::new(self.program_len());
+		self.state = P::new(self.program_len());
 	}
 
 	fn current_line(&self) -> &'a str {

@@ -20,14 +20,20 @@ impl ProgramState for AdvancedProgramState {
 	}
 
 	fn nth(&self, index: u32) -> Option<&RefCell<VecStack>> {
-		self.program_stacks.get(index as usize)
+		if index < self.program_stacks.len() as u32 {
+			return self.program_stacks.get(index as usize);
+		} else {
+			return self.extended_stacks.get(&index);
+		}
 	}
 
-	fn collect_garbage(&mut self, program_defined: &u32, remote_index: &u32) {
-		// TODO
+	fn collect_garbage(&mut self, _program_defined: &u32, remote_index: &u32) {
+		self.extended_stacks.retain(|index, stack| {
+			// retain only if it's the reserved remote stack or contains values
+			index == remote_index || !stack.borrow().is_empty()
+		});
 	}
 
-	// TODO document
 	fn init_stack(&mut self, index: &u32) {
 		// only search extended stacks if we know it's extended
 		if index < &(self.program_stacks.len() as u32) || self.extended_stacks.contains_key(index) {
