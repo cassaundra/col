@@ -1,3 +1,18 @@
+//! Interpret a col program from a string.
+//!
+//! # Example
+//!
+//! ```
+//! use std::io::{stdout, stdin};
+//!
+//! let mut stdout = stdout();
+//!	let mut stdin = stdin();
+//!
+//!	Interpreter::new("\"Hello world\"Arp@", Some(&mut stdin), Some(&mut stdout))
+//!		.run(delay)
+//!		.expect("An I/O error occurred");
+//! ```
+
 use std::cell::RefMut;
 use std::io::{Write, Read};
 
@@ -71,7 +86,7 @@ impl<'a> Interpreter<'a> {
 			// do garbage collection/manual mem adjustment
 			if gc_count >= GC_STEPS - 1 || result.should_adjust_mem {
 				gc_count = 0;
-				self.state.adjust_memory(&(self.source.len() as u32), &self.remote_column);
+				self.state.collect_garbage(&(self.source.len() as u32), &self.remote_column);
 			} else {
 				gc_count += 1;
 			}
@@ -104,12 +119,12 @@ impl<'a> Interpreter<'a> {
 		self.matching(&Instruction::LeftBracket, &Instruction::RightBracket, iter)
 	}
 
-	/// Find the matching left bracket backwards
+	/// Find the matching left bracket backwards.
 	fn matching_backwards(&self) -> u32 {
 		self.matching(&Instruction::RightBracket, &Instruction::LeftBracket, (0..self.ip - 1).rev())
 	}
 
-	/// Used by matching_backwards and matching_forwards
+	/// Used by matching_backwards and matching_forwards.
 	fn matching<I>(&self, current: &Instruction, matching: &Instruction, iter: I) -> u32
 		where I: Iterator<Item = u32> {
 		let line = self.current_line();

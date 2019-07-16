@@ -1,3 +1,5 @@
+//! Program state.
+
 use std::collections::HashMap;
 use std::cell::RefCell;
 
@@ -7,6 +9,7 @@ pub struct ProgramState {
 }
 
 impl ProgramState {
+	/// Create a new `ProgramState` with an initial number of empty `VecStack`s
 	pub fn new(initial_count: u32) -> Self {
 		let mut stacks = HashMap::new();
 
@@ -16,11 +19,18 @@ impl ProgramState {
 
 		ProgramState { stacks }
 	}
+
+	/// Get the nth program stack as a RefCell to be borrowed.
+	///
+	/// This does NOT insert a new stack if one does not exist.
+	/// See `insert_stack`.
 	pub fn nth(&self, index: u32) -> Option<&RefCell<VecStack>> {
 		self.stacks.get(&index)
 	}
 
-	pub fn adjust_memory(&mut self, program_defined: &u32, remote_index: &u32) {
+	/// Invoke the garbage collector
+	/// TODO improve, then explain how it actually works
+	pub fn collect_garbage(&mut self, program_defined: &u32, remote_index: &u32) {
 		// insert a stack at the remote column if one does not exist already
 		self.stacks.entry(*remote_index)
 			.or_insert(RefCell::new(VecStack::default()));
@@ -35,6 +45,11 @@ impl ProgramState {
 
 			return true; // if it's part of the program defined stacks, keep it!
 		});
+	}
+
+	// TODO document
+	pub fn insert_stack(&mut self, index: &u32) {
+		self.stacks.insert(*index, RefCell::new(VecStack::default()));
 	}
 }
 

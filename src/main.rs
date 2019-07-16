@@ -1,12 +1,21 @@
+//! *col* is an esoteric programming language inspired by classical architectural columns and the
+//! syntax of other esolangs like [Befunge](https://esolangs.org/wiki/Befunge) and
+//! [Brainfuck](https://esolangs.org/wiki/Brainfuck).
+//!
+//! Learn more in the [project repository](https://github.com/cassaundra/col).
+//!
+//! To interpret col in your own program, see the [interpreter](interpreter)
+//! documentation.
+
 #![feature(exclusive_range_pattern)]
 
 use crate::interpreter::{Interpreter};
 use std::io::{stdout, stdin};
 use clap::{App, Arg, crate_version, crate_authors, crate_description, value_t};
 
-mod parser;
-mod interpreter;
-mod program;
+pub mod parser;
+pub mod interpreter;
+pub mod program;
 
 fn main() {
 	let matches = App::new("col")

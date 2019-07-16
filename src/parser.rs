@@ -1,3 +1,13 @@
+//! Parse col instructions from characters.
+//!
+//! # Example
+//!
+//! ```
+//! let instr = Instruction::from_char('@');
+//!
+//! assert!(instr, Some(Instruction::Terminate));
+//! ```
+
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Instruction {
 	/// Push the index of the column on the left onto the local stack
@@ -65,7 +75,7 @@ pub enum Instruction {
 	/// Print all values in stack (from top to bottom) as UTF-8 characters.
 	PrintAll,
 	/// Terminate the entire program.
-	Terminate
+	Terminate,
 }
 
 impl Instruction {
