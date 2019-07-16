@@ -17,8 +17,10 @@ use std::cell::RefMut;
 use std::io::{Write, Read};
 
 use crate::parser::Instruction;
-use crate::program::{Stack, VecStack};
+use crate::program::VecStack;
 use crate::program::ProgramState;
+use crate::program::simple::SimpleProgramState;
+
 use std::time::Duration;
 use std::thread;
 
@@ -27,7 +29,7 @@ use std::thread;
 const GC_STEPS: u32 = 2048;
 
 #[derive(Default)]
-pub struct Interpreter<'a> {
+pub struct Interpreter<'a, P: ProgramState> {
 	/// The source of the program
 	source: Vec<&'a str>,
 	/// Program input
@@ -35,7 +37,7 @@ pub struct Interpreter<'a> {
 	/// Program output
 	writer: Option<&'a mut dyn Write>,
 	/// The memory stacks
-	state: ProgramState,
+	state: P,
 	/// The index of the current local column
 	local_column: u32,
 	/// The index of the current remote column
@@ -50,17 +52,17 @@ pub struct Interpreter<'a> {
 struct StepResponse {
 	/// Is the program still alive after this step?
 	is_alive: bool,
-	/// Should
-	should_adjust_mem: bool,
+	/// Should the remote stack be initialized?
+	should_init_remote: bool,
 }
 
 impl Default for StepResponse {
 	fn default() -> Self {
-		StepResponse { is_alive: true, should_adjust_mem: false }
+		StepResponse { is_alive: true, should_init_remote: false, }
 	}
 }
 
-impl<'a> Interpreter<'a> {
+impl<'a> Interpreter<'a, SimpleProgramState> {
 	/// Create a new col interpreter from a program
 	pub fn new(program: &'a str, reader: Option<&'a mut dyn Read>, writer: Option<&'a mut dyn Write>) -> Self {
 		let mut interpeter = Self::default();
@@ -83,12 +85,14 @@ impl<'a> Interpreter<'a> {
 		while {
 			let result = self.step()?;
 
-			// do garbage collection/manual mem adjustment
-			if gc_count >= GC_STEPS - 1 || result.should_adjust_mem {
-				gc_count = 0;
-				self.state.collect_garbage(&(self.source.len() as u32), &self.remote_column);
-			} else {
-				gc_count += 1;
+			// do garbage collection
+			if gc_count % GC_STEPS == 0 {
+				self.state.collect_garbage(&self.program_len(), &self.remote_column);
+			}
+			gc_count += 1;
+
+			if result.should_init_remote {
+				self.state.init_stack(&self.remote_column);
 			}
 
 			result.is_alive
@@ -103,14 +107,18 @@ impl<'a> Interpreter<'a> {
 		Ok(())
 	}
 
-	fn load_source(&mut self, program: &'a str) -> &mut Self {
+	fn load_source(&mut self, program: &'a str) {
 		self.source = program.lines().collect();
-		self.state = ProgramState::new(self.source.len() as u32);
-		self
+		self.state = SimpleProgramState::new(self.program_len());
 	}
 
 	fn current_line(&self) -> &'a str {
 		self.source[self.local_column as usize]
+	}
+
+	/// Number of program-defined columns
+	fn program_len(&self) -> u32 {
+		self.source.len() as u32
 	}
 
 	/// Find the matching right bracket forwards
@@ -217,15 +225,15 @@ impl<'a> Interpreter<'a> {
 				local_stack.push(self.local_column);
 			},
 			Instruction::SetLocalColumn => {
-				self.local_column = local_stack.pop() % self.source.len() as u32;
+				self.local_column = local_stack.pop() % self.program_len() as u32;
 				self.ip = 0; // we'll begin executing here
 			}
 			Instruction::SetRemoteStack => {
 				self.remote_column = local_stack.pop();
 
 				// this will ensure the stack is available the next iteration
-				if self.remote_column >= self.source.len() as u32 {
-					step_result.should_adjust_mem = true;
+				if self.remote_column >= self.program_len() as u32 {
+					step_result.should_init_remote = true;
 				}
 			},
 			Instruction::MoveToRemote => {

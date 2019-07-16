@@ -133,7 +133,7 @@ A$0~v1~v0~:^+::1~^#
 
 Interpreter:
 - Improve performance, I/O is a notable bottleneck
-- Improve garbage collection. Current implementation is a naive placeholder
+- Improve char parsing
 - Add more command line options
     - Verbose mode
     - Step-by-step debug (visualizer?)
