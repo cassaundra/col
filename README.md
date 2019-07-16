@@ -137,7 +137,5 @@ Interpreter:
 - Add more command line options
     - Verbose mode
     - Step-by-step debug (visualizer?)
-    - Optional step delay
-    - Specify I/O streams
 - API?
 - Add more unit tests

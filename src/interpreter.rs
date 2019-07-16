@@ -4,6 +4,8 @@ use std::io::{Write, Read};
 use crate::parser::Instruction;
 use crate::program::{Stack, VecStack};
 use crate::program::ProgramState;
+use std::time::Duration;
+use std::thread;
 
 /// How often automatic garbage collection will occur.
 /// The counter should be reset after manual memory cleanups.
@@ -11,6 +13,8 @@ const GC_STEPS: u32 = 2048;
 
 #[derive(Default)]
 pub struct Interpreter<'a> {
+	/// How long to delay between steps in milliseconds
+	pub delay_ms: u64,
 	/// The source of the program
 	source: Vec<&'a str>,
 	/// Program input
@@ -67,6 +71,7 @@ impl<'a> Interpreter<'a> {
 		let mut gc_count = 0;
 
 		// keep stepping until terminated
+		// first group is condition, second is body for delay
 		while {
 			let result = self.step()?;
 
@@ -79,7 +84,13 @@ impl<'a> Interpreter<'a> {
 			}
 
 			result.is_alive
-		} {}
+		} {
+			// we don't even want to call the thread sleep if 0, because
+			// it might still pause the thread for a bit (citation needed)
+			if self.delay_ms != 0 {
+				thread::sleep(Duration::from_millis(self.delay_ms));
+			}
+		}
 
 		Ok(())
 	}
