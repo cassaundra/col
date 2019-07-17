@@ -25,7 +25,7 @@ impl ProgramState for SimpleProgramState {
 		self.stacks.get(&index)
 	}
 
-	fn collect_garbage(&mut self, program_defined: &u32, remote_index: &u32) {
+	fn discard_unused(&mut self, program_defined: &u32, remote_index: &u32) {
 		// remove empty stacks that aren't being used by the program or the remote stack.
 		// we could also use a queuing system that delays the removal, but I don't think allocating
 		// individual stacks is that expensive so...

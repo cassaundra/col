@@ -133,11 +133,12 @@ A$0~v1~v0~:^+::1~^#
 ```
 " r:2+p@
 ```
+
 Interpreter:
 - Improve performance, I/O is a notable bottleneck
 - Improve char parsing
 - Add more command line options
     - Verbose mode
     - Step-by-step debug (visualizer?)
-- API?
+- Improve API
 - Add more unit tests

@@ -5,6 +5,9 @@
 //! ```
 //! use std::io::{stdout, stdin};
 //!
+//! use col::interpreter::Interpreter;
+//! use col::program::SimpleProgramState;
+//!
 //! let mut stdout = stdout();
 //!	let mut stdin = stdin();
 //!
@@ -25,7 +28,7 @@ use std::thread;
 
 /// How often automatic garbage collection will occur.
 /// The counter should be reset after manual memory cleanups.
-const GC_STEPS: u32 = 2048;
+const GC_STEPS: u32 = 8192;
 
 #[derive(Default)]
 pub struct Interpreter<'a, P: ProgramState> {
@@ -76,12 +79,14 @@ impl<'a, P: ProgramState> Interpreter<'a, P> {
 		interpeter
 	}
 
+	/// Executes the program until terminates.
+	/// This function is blocking and will return when the program has completed execution.
 	pub fn run(&mut self) -> std::io::Result<()> {
 		self.run_with_delay(0)
 	}
 
-	/// Executes the program until it terminates.
-	/// Blocking, will return when complete.
+	/// Executes the program until it terminates with a specified delay between each step.
+	/// This function is blocking and will return when the program has completed execution
 	pub fn run_with_delay(&mut self, delay_ms: u64) -> std::io::Result<()> {
 		let mut gc_count = 0;
 
@@ -93,7 +98,7 @@ impl<'a, P: ProgramState> Interpreter<'a, P> {
 
 			// do garbage collection
 			if gc_count % GC_STEPS == 0 {
-				self.state.collect_garbage(&self.program_len(), &self.remote_column);
+				self.state.discard_unused(&self.program_len(), &self.remote_column);
 			}
 			gc_count += 1;
 

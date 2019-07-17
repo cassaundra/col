@@ -3,9 +3,11 @@
 //! # Example
 //!
 //! ```
-//! let instr = Instruction::from_char('@');
+//! use col::parser::Instruction;
 //!
-//! assert!(instr, Some(Instruction::Terminate));
+//! let instr = Instruction::from_char(&'@');
+//!
+//! assert_eq!(instr, Some(Instruction::Terminate));
 //! ```
 
 #[derive(Copy, Clone, Debug, PartialEq)]

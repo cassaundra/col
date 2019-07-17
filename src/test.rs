@@ -1,6 +1,7 @@
-use super::*;
-
 use std::io::Read;
+
+use crate::interpreter::Interpreter;
+use crate::program::AdvancedProgramState;
 
 fn get_output_with_input<R: Read>(source: &str, reader: &mut R) -> String {
 	let mut output = Vec::new();
@@ -50,7 +51,7 @@ fn test_io() {
 }
 
 #[test]
-fn test_nav() {
+fn test_flow() {
 
 }
 

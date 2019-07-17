@@ -18,8 +18,8 @@ pub trait ProgramState: Default {
 	/// See `insert_stack`.
 	fn nth(&self, index: u32) -> Option<&RefCell<VecStack>>;
 
-	/// Invoke the garbage collector. The implementation will vary.
-	fn collect_garbage(&mut self, program_defined: &u32, remote_index: &u32);
+	/// Invoke basic garbage collection. The implementation will vary.
+	fn discard_unused(&mut self, program_defined: &u32, remote_index: &u32);
 
 	/// Insert a stack, especially for outside of the program defined range.
 	/// If one already exists at the index, then nothing should happen.

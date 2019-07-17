@@ -27,7 +27,7 @@ impl ProgramState for AdvancedProgramState {
 		}
 	}
 
-	fn collect_garbage(&mut self, _program_defined: &u32, remote_index: &u32) {
+	fn discard_unused(&mut self, _program_defined: &u32, remote_index: &u32) {
 		self.extended_stacks.retain(|index, stack| {
 			// retain only if it's the reserved remote stack or contains values
 			index == remote_index || !stack.borrow().is_empty()
