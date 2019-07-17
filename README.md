@@ -129,8 +129,10 @@ Ideally the max value would be greater than or equal to the number of columns, s
 A$0~v1~v0~:^+::1~^#
 ```
 
-## TODO
-
+**Quine:**
+```
+" r:2+p@
+```
 Interpreter:
 - Improve performance, I/O is a notable bottleneck
 - Improve char parsing

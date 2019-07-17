@@ -9,7 +9,7 @@
 //!	let mut stdin = stdin();
 //!
 //!	Interpreter::<SimpleProgramState>::new("\"Hello world\"Arp@", Some(&mut stdin), Some(&mut stdout))
-//!		.run(delay)
+//!		.run()
 //!		.expect("An I/O error occurred");
 //! ```
 
@@ -53,11 +53,13 @@ struct StepResponse {
 	is_alive: bool,
 	/// Should the remote stack be initialized?
 	should_init_remote: bool,
+	/// If the execute instruction was called, then this instr should be executed
+	exec_instruction: Option<Instruction>,
 }
 
 impl Default for StepResponse {
 	fn default() -> Self {
-		StepResponse { is_alive: true, should_init_remote: false, }
+		StepResponse { is_alive: true, should_init_remote: false, exec_instruction: None }
 	}
 }
 
@@ -74,14 +76,19 @@ impl<'a, P: ProgramState> Interpreter<'a, P> {
 		interpeter
 	}
 
+	pub fn run(&mut self) -> std::io::Result<()> {
+		self.run_with_delay(0)
+	}
+
 	/// Executes the program until it terminates.
 	/// Blocking, will return when complete.
-	pub fn run(&mut self, delay_ms: u64) -> std::io::Result<()> {
+	pub fn run_with_delay(&mut self, delay_ms: u64) -> std::io::Result<()> {
 		let mut gc_count = 0;
 
 		// keep stepping until terminated
 		// first group is condition, second is body for delay
 		while {
+			// do execution step if epoch
 			let result = self.step()?;
 
 			// do garbage collection
@@ -90,6 +97,7 @@ impl<'a, P: ProgramState> Interpreter<'a, P> {
 			}
 			gc_count += 1;
 
+			// ensure the remote stack is initialized
 			if result.should_init_remote {
 				self.state.init_stack(&self.remote_column);
 			}
@@ -196,6 +204,10 @@ impl<'a, P: ProgramState> Interpreter<'a, P> {
 
 			// execute and pass on result
 			self.execute_instruction(instr.unwrap(), &mut step_result)?;
+
+			if let Some(instr) = step_result.exec_instruction {
+				self.execute_instruction(instr, &mut step_result)?;
+			}
 		};
 
 		return Ok(step_result);

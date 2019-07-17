@@ -9,11 +9,11 @@
 
 #![feature(exclusive_range_pattern)]
 
-use crate::interpreter::{Interpreter};
 use std::io::{stdout, stdin};
 use clap::{App, Arg, crate_version, crate_authors, crate_description, value_t};
-use crate::program::simple::SimpleProgramState;
-use crate::program::advanced::AdvancedProgramState;
+
+use interpreter::{Interpreter};
+use program::{AdvancedProgramState};
 
 pub mod parser;
 pub mod interpreter;
@@ -43,7 +43,7 @@ fn main() {
 	let mut stdin = stdin();
 
 	Interpreter::<AdvancedProgramState>::new(&program, Some(&mut stdin), Some(&mut stdout))
-		.run(delay)
+		.run_with_delay(delay)
 		.expect("An I/O error occurred");
 }
 

@@ -2,8 +2,11 @@
 
 use std::cell::RefCell;
 
-pub mod simple;
-pub mod advanced;
+mod simple;
+mod advanced;
+
+pub use simple::SimpleProgramState;
+pub use advanced::AdvancedProgramState;
 
 pub trait ProgramState: Default {
 	/// Create a new `ProgramState` with an initial number of empty `VecStack`s
