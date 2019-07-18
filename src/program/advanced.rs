@@ -42,4 +42,20 @@ impl ProgramState for AdvancedProgramState {
 
 		self.extended_stacks.insert(*index, RefCell::new(VecStack::default()));
 	}
+
+	fn stacks(&self) -> Vec<(u32, Ref<Vec<u32>>)> {
+		let mut stacks: Vec<(u32, Ref<Vec<u32>>)> = self.program_stacks.iter().enumerate().map(|(index, stack)| {
+			let stack = Ref::map(stack.borrow(), |t| t.values());
+
+			(index as u32, stack)
+		}).collect();
+
+		stacks.extend(self.extended_stacks.iter().map(|(index, stack)| {
+			let stack = Ref::map(stack.borrow(), |t| t.values());
+
+			(*index, stack)
+		}));
+
+		stacks
+	}
 }

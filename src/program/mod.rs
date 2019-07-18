@@ -1,6 +1,6 @@
 //! Program state.
 
-use std::cell::RefCell;
+use std::cell::{RefCell, Ref};
 
 mod simple;
 mod advanced;
@@ -24,6 +24,9 @@ pub trait ProgramState: Default {
 	/// Insert a stack, especially for outside of the program defined range.
 	/// If one already exists at the index, then nothing should happen.
 	fn init_stack(&mut self, index: &u32);
+
+	/// Immutable view of of the program memory.
+	fn stacks(&self) -> Vec<(u32, Ref<Vec<u32>>)>;
 }
 
 #[derive(Clone, Default, Debug)]
@@ -50,7 +53,7 @@ impl VecStack {
 	}
 
 	pub fn peek(&self) -> u32 {
-		*self.stack.last().unwrap_or(&0u32)
+		*self.stack.last().unwrap_or(&0)
 	}
 
 	pub fn clear(&mut self) {

@@ -1,7 +1,7 @@
 //#![feature(exclusive_range_pattern)]
 
 use std::io::{stdout, stdin};
-use clap::{App, Arg, crate_version, crate_authors, crate_description, value_t};
+use clap::{App, Arg, crate_version, crate_authors, value_t};
 
 use col::interpreter::{Interpreter};
 use col::program::{AdvancedProgramState};

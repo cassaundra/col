@@ -33,7 +33,7 @@ jkl
 
 ## Interpreter
 
-This repository contains col's interpreter. Compile it with `cargo build --release`, run the interpreter on a file with `cargo run --release -- file.col`. Check the `--help` for more information.
+This repository contains col's interpreter. Compile it with `cargo build --bin coli --release`, run the interpreter on a file with `cargo run --bin coli --release -- file.col`. Check the `--help` for more information.
 
 ## Theory
 
@@ -133,6 +133,8 @@ A$0~v1~v0~:^+::1~^#
 ```
 " r:2+p@
 ```
+
+## TODO
 
 Interpreter:
 - Improve performance, I/O is a notable bottleneck

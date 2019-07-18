@@ -15,20 +15,36 @@
 //!		.run()
 //!		.expect("An I/O error occurred");
 //! ```
+//!
+//! It is also possible to register a callback after each step.
+//!
+//! ```
+//! use col::interpreter::Interpreter;
+//! use col::program::{SimpleProgramState, AdvancedProgramState};
+//!
+//! Interpreter::<AdvancedProgramState>::new("12345@", None, None)
+//! 	.with_step_callback(&|stacks| {
+//! 		for (index, stack) in stacks {
+//! 			println!("{}: {:?}", index, stack);
+//! 		}
+//! 	})
+//! 	.run_with_delay(20) // wait 20 ms between steps
+//! 	.expect("An I/O error occurred")
+//! ```
 
-use std::cell::RefMut;
-use std::io::{Write, Read};
+use std::cell::{Ref, RefMut};
+use std::io::{Read, Write};
+use std::thread;
+use std::time::Duration;
 
 use crate::parser::Instruction;
-use crate::program::VecStack;
-use crate::program::ProgramState;
-
-use std::time::Duration;
-use std::thread;
+use crate::program::{ProgramState, VecStack};
 
 /// How often automatic garbage collection will occur.
-/// The counter should be reset after manual memory cleanups.
 const GC_STEPS: u32 = 8192;
+
+/// Callback function for after each step.
+type StepCallback = dyn Fn(Vec<(u32, Ref<Vec<u32>>)>);
 
 #[derive(Default)]
 pub struct Interpreter<'a, P: ProgramState> {
@@ -38,6 +54,8 @@ pub struct Interpreter<'a, P: ProgramState> {
 	reader: Option<&'a mut dyn Read>,
 	/// Program output
 	writer: Option<&'a mut dyn Write>,
+	/// User-defined step callback
+	step_callback: Option<Box<&'a StepCallback>>,
 	/// The memory stacks
 	state: P,
 	/// The index of the current local column
@@ -56,13 +74,11 @@ struct StepResponse {
 	is_alive: bool,
 	/// Should the remote stack be initialized?
 	should_init_remote: bool,
-	/// If the execute instruction was called, then this instr should be executed
-	exec_instruction: Option<Instruction>,
 }
 
 impl Default for StepResponse {
 	fn default() -> Self {
-		StepResponse { is_alive: true, should_init_remote: false, exec_instruction: None }
+		StepResponse { is_alive: true, should_init_remote: false }
 	}
 }
 
@@ -77,6 +93,14 @@ impl<'a, P: ProgramState> Interpreter<'a, P> {
 		interpeter.writer = writer;
 
 		interpeter
+	}
+
+	/// Set a callback function to be called after each program step.
+	///
+	/// See module documentation for example.
+	pub fn with_step_callback(&mut self, callback: &'a StepCallback) -> &mut Self {
+		self.step_callback = Some(Box::new(callback));
+		self
 	}
 
 	/// Executes the program until terminates.
@@ -105,6 +129,10 @@ impl<'a, P: ProgramState> Interpreter<'a, P> {
 			// ensure the remote stack is initialized
 			if result.should_init_remote {
 				self.state.init_stack(&self.remote_column);
+			}
+
+			if let Some(callback) = &self.step_callback {
+				&callback(self.state.stacks());
 			}
 
 			result.is_alive
@@ -209,10 +237,6 @@ impl<'a, P: ProgramState> Interpreter<'a, P> {
 
 			// execute and pass on result
 			self.execute_instruction(instr.unwrap(), &mut step_result)?;
-
-			if let Some(instr) = step_result.exec_instruction {
-				self.execute_instruction(instr, &mut step_result)?;
-			}
 		};
 
 		return Ok(step_result);
@@ -279,6 +303,7 @@ impl<'a, P: ProgramState> Interpreter<'a, P> {
 			},
 			Instruction::SwapStacks => {
 				if let Some(remote_stack) = &mut remote_stack {
+					// TODO could take advantage of RefCell swap
 					let local_values = local_stack.values().clone();
 					let remote_values = remote_stack.values().clone();
 

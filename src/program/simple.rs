@@ -1,7 +1,7 @@
 //! TODO document me
 
 use std::collections::HashMap;
-use std::cell::RefCell;
+use std::cell::{RefCell, Ref};
 
 use super::*;
 
@@ -44,5 +44,13 @@ impl ProgramState for SimpleProgramState {
 		}
 
 		self.stacks.insert(*index, RefCell::new(VecStack::default()));
+	}
+
+	fn stacks(&self) -> Vec<(u32, Ref<Vec<u32>>)> {
+		self.stacks.iter().map(|(index, stack)| {
+			let stack = Ref::map(stack.borrow(), |s| s.values());
+
+			(*index, stack)
+		}).collect()
 	}
 }
