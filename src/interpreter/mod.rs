@@ -39,8 +39,9 @@ use std::time::Duration;
 
 use crate::parser::Instruction;
 use crate::program::{ProgramState, VecStack};
+use std::borrow::BorrowMut;
 
-/// How often automatic garbage collection will occur.
+/// How often automatic tne basic garbage collection will be called.
 const GC_STEPS: u32 = 8192;
 
 /// Callback function for after each step.
@@ -98,7 +99,7 @@ impl<'a, P: ProgramState> Interpreter<'a, P> {
 	/// Set a callback function to be called after each program step.
 	///
 	/// See module documentation for example.
-	pub fn with_step_callback(&mut self, callback: &'a StepCallback) -> &mut Self {
+	pub fn with_step_callback(mut self, callback: &'a StepCallback) -> Self {
 		self.step_callback = Some(Box::new(callback));
 		self
 	}
@@ -117,7 +118,7 @@ impl<'a, P: ProgramState> Interpreter<'a, P> {
 		// keep stepping until terminated
 		// first group is condition, second is body for delay
 		while {
-			// do execution step if epoch
+			// do execution step
 			let result = self.step()?;
 
 			// do garbage collection
@@ -172,7 +173,7 @@ impl<'a, P: ProgramState> Interpreter<'a, P> {
 		self.matching(&Instruction::RightBracket, &Instruction::LeftBracket, (0..self.ip - 1).rev())
 	}
 
-	/// Used by matching_backwards and matching_forwards.
+	/// Used by `matching_backwards` and `matching_forwards`.
 	fn matching<I>(&self, current: &Instruction, matching: &Instruction, iter: I) -> u32
 		where I: Iterator<Item = u32> {
 		let line = self.current_line();
@@ -304,11 +305,7 @@ impl<'a, P: ProgramState> Interpreter<'a, P> {
 			Instruction::SwapStacks => {
 				if let Some(remote_stack) = &mut remote_stack {
 					// TODO could take advantage of RefCell swap
-					let local_values = local_stack.values().clone();
-					let remote_values = remote_stack.values().clone();
-
-					local_stack.set_all(remote_values);
-					remote_stack.set_all(local_values);
+					VecStack::swap(local_stack.borrow_mut(), remote_stack);
 				}
 			},
 			Instruction::Reverse => {

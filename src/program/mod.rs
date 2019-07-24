@@ -12,10 +12,9 @@ pub trait ProgramState: Default {
 	/// Create a new `ProgramState` with an initial number of empty `VecStack`s
 	fn new(initial_count: u32) -> Self;
 
-	/// Get the nth program stack as a RefCell to be borrowed.
+	/// Get the nth program stack as a RefCell to be borrowed as immutable or mutable.
 	///
-	/// This does NOT insert a new stack if one does not exist.
-	/// See `insert_stack`.
+	/// This does NOT insert a new stack if one does not exist (see `insert_stack).
 	fn nth(&self, index: u32) -> Option<&RefCell<VecStack>>;
 
 	/// Invoke basic garbage collection. The implementation will vary.
@@ -64,11 +63,11 @@ impl VecStack {
 		self.stack.reverse()
 	}
 
-	pub fn set_all(&mut self, values: Vec<u32>) {
-		self.stack = values;
-	}
-
 	pub fn is_empty(&self) -> bool {
 		self.stack.is_empty()
+	}
+
+	pub fn swap(a: &mut VecStack, b: &mut VecStack) {
+		std::mem::swap(a, b);
 	}
 }

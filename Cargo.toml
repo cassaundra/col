@@ -1,12 +1,12 @@
 [package]
 name = "col"
 version = "0.1.0"
-description = "Interpreter for the col language"
+description = "Interpreter and library for the col esoteric programming language"
 authors = ["Cassaundra <cass@cassaundra.io>"]
 edition = "2018"
 
 [dependencies]
-clap = "2.32.0"
+clap = "2.32.0" # used only by the coli binary
 rand = "0.7.0"
 
 [lib]

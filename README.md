@@ -33,11 +33,15 @@ jkl
 
 ## Interpreter
 
-This repository contains col's interpreter. Compile it with `cargo build --bin coli --release`, run the interpreter on a file with `cargo run --bin coli --release -- file.col`. Check the `--help` for more information.
+This repository contains col's interpreter. Its only direct dependencies are `rand` and `clap`, for all you purists out there! (:
+
+Compile it with `cargo build --bin coli --release`, and run the interpreter on a file with `cargo run --bin coli --release -- file.col`. Check the `--help` for more information.
+
+You can also use col as a library in your own project. See the crate documentation for more details.
 
 ## Theory
 
-`col` is not designed to be easy-to-use. At its best, it disrupts common programming paradigms to make the programmer have to stop and think more frequently. Here are a couple of interesting notes on its implications:
+`col` is not designed to be easy to use. At its best, it disrupts common programming paradigms to make the programmer have to stop and think more frequently. Here are a couple of interesting notes on its implications:
 
 There aren't clear assurances of immutability or privacy as any column may read and/or modify another column's stack. In traditional programming, this would be dangerous, but it's an intentional design choice in `col`. The accessibility of memory is unrestricted, but there are still clearly defined associations between instructions sets and their memory.
 
@@ -123,6 +127,7 @@ Ideally the max value would be greater than or equal to the number of columns, s
 ```
 
 **Fibonacci:**
+
 ```
 >;
 11#>;
@@ -130,6 +135,7 @@ A$0~v1~v0~:^+::1~^#
 ```
 
 **Quine:**
+
 ```
 " r:2+p@
 ```
@@ -139,8 +145,7 @@ A$0~v1~v0~:^+::1~^#
 Interpreter:
 - Improve performance, I/O is a notable bottleneck
 - Improve char parsing
-- Add more command line options
-    - Verbose mode
-    - Step-by-step debug (visualizer?)
 - Improve API
 - Add more unit tests
+- Decide on a program state implementation
+- Use generics to allow deviations from the unsigned 32-bit default type
