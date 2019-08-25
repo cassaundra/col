@@ -41,9 +41,7 @@ You can also use col as a library in your own project. See the crate documentati
 
 ## Theory
 
-`col` is not designed to be easy to use. At its best, it disrupts common programming paradigms to make the programmer have to stop and think more frequently. Here are a couple of interesting notes on its implications:
-
-There aren't clear assurances of immutability or privacy as any column may read and/or modify another column's stack. In traditional programming, this would be dangerous, but it's an intentional design choice in `col`. The accessibility of memory is unrestricted, but there are still clearly defined associations between instructions sets and their memory.
+There aren't clear assurances of immutability or privacy in a col program, as any column may read and/or modify another column's stack. In traditional programming, this would be dangerous, but it's an intentional design choice in col. The accessibility of memory is unrestricted, but there are still clearly defined associations between instructions sets and their memory.
 
 Furthermore, "functions" (instruction sets) may have memory that persists longer than a single execution. The programmer may choose to clear the memory stack as if it's scoped, or allow it to persist through future iterations, or a hybrid of both. As a result, the line between persistent and ephemeral memory is blurred.
 
@@ -145,7 +143,6 @@ A$0~v1~v0~:^+::1~^#
 Interpreter:
 - Improve performance, I/O is a notable bottleneck
 - Improve char parsing
-- Improve API
 - Add more unit tests
 - Decide on a program state implementation
 - Use generics to allow deviations from the unsigned 32-bit default type
