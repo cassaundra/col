@@ -154,7 +154,7 @@ impl<'a, P: ProgramState> Interpreter<'a, P> {
 	}
 
 	fn current_line(&self) -> &'a str {
-		self.source[self.local_column as usize]
+		self.source.get(self.local_column as usize).unwrap_or(&"")
 	}
 
 	/// Number of program-defined columns
@@ -202,7 +202,9 @@ impl<'a, P: ProgramState> Interpreter<'a, P> {
 	/// Safely increment the instruction pointer by one
 	fn increment_ip(&mut self) {
 		self.ip += 1;
-		self.ip = self.ip % self.current_line().len() as u32;
+		if self.current_line().len() > 0 {
+			self.ip = self.ip % self.current_line().len() as u32;
+		}
 	}
 
 	/// Perform one program step
