@@ -352,21 +352,25 @@ impl<'a, P: ProgramState> Interpreter<'a, P> {
 				let (a, b) = local_stack.pop2();
 				local_stack.push((b > a) as u32);
 			},
-			Instruction::And => {
+			Instruction::BitwiseNand => {
+				let (a, b) = local_stack.pop2();
+				local_stack.push(!(a & b));
+			},
+			Instruction::LogicalAnd => {
 				let (a, b) = local_stack.pop2();
 				local_stack.push((a != 0 && b != 0) as u32);
-			},
-			Instruction::Or => {
+			}
+			Instruction::LogicalOr => {
 				let (a, b) = local_stack.pop2();
 				local_stack.push((a != 0 || b != 0) as u32);
-			},
-			Instruction::Invert => {
+			}
+			Instruction::LogicalNot => {
 				if local_stack.pop() == 0 {
 					local_stack.push(1);
 				} else {
 					local_stack.push(0);
 				}
-			},
+			}
 			Instruction::Random => {
 				local_stack.push(rand::random());
 			},

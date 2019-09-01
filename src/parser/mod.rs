@@ -58,12 +58,14 @@ pub enum Instruction {
 	Equals,
 	/// Pop values `a` and `b` and push `1` if `b` is greater than `a` and `0` otherwise.
 	GreaterThan,
+	/// Pop values `a` and `b` and push the bitwise NAND result of the two.
+	BitwiseNand,
 	/// Pop values `a` and `b` and push one if they're both non-zero, and push zero otherwise. Not a bitwise AND.
-	And,
+	LogicalAnd,
 	/// Pop values `a` and `b` and push one if at least one is non-zero, and push zero if they are both zero. Not a bitwise OR.
-	Or,
+	LogicalOr,
 	/// Invert the top value of the local stack. If it's `0`, push one, otherwise push `1`;
-	Invert,
+	LogicalNot,
 	/// Push a random value to the local stack.
 	Random,
 	/// Toggle string mode. Until a matching "string mode" token is executed, characters will be interpreted as raw values.
@@ -108,9 +110,10 @@ impl Instruction {
 			'%' => Instruction::Modulo,
 			'=' => Instruction::Equals,
 			'`' => Instruction::GreaterThan,
-			'&' => Instruction::And,
-			'|' => Instruction::Or,
-			'!' => Instruction::Invert,
+			',' => Instruction::BitwiseNand,
+			'&' => Instruction::LogicalAnd,
+			'|' => Instruction::LogicalOr,
+			'!' => Instruction::LogicalNot,
 			'?' => Instruction::Random,
 			'"' => Instruction::StringMode,
 			'_' => Instruction::Input,

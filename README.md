@@ -105,6 +105,7 @@ Ideally the max value would be greater than or equal to the number of columns, s
 | `%` | Pop values `a` and `b` and push the remainder of the integer division of `b` divided by `a`.                                     |
 | `=` | Pop values `a` and `b`, and push one if `a` equals `b`, and zero otherwise.                                                      |
 |`` ` ``| Pop values `a` and `b` and push one if `b` is greater than `a`, and zero otherwise.                                            |
+| `,` | Pop values `a` and `b` and push the bitwise NAND result of the two.                                                              |
 | `&` | Pop values `a` and `b` and push one if they're both non-zero, and push zero otherwise. Not a bitwise AND.                        |
 |`\|` | Pop values `a` and `b` and push one if at least one is non-zero, and push zero if they are both zero. Not a bitwise OR.          |
 | `!` | Invert the top value of the local stack. If it's zero, push one, and if it's non-zero, push zero.                                |
