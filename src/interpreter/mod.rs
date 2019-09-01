@@ -20,9 +20,9 @@
 //!
 //! ```
 //! use col::interpreter::Interpreter;
-//! use col::program::{SimpleProgramState, AdvancedProgramState};
+//! use col::program::SimpleProgramState;
 //!
-//! Interpreter::<AdvancedProgramState>::new("12345@", None, None)
+//! Interpreter::<SimpleProgramState>::new("12345@", None, None)
 //! 	.with_step_callback(&|stacks| {
 //! 		for (index, stack) in stacks {
 //! 			println!("{}: {:?}", index, stack);
@@ -371,6 +371,9 @@ impl<'a, P: ProgramState> Interpreter<'a, P> {
 				local_stack.push(rand::random());
 			},
 			Instruction::StringMode => {
+				// realistically this will only ever *enable* string mode
+				// because execute_instruction is not called while already
+				// inside string mode
 				self.is_string_mode = !self.is_string_mode;
 			},
 			Instruction::Input => {

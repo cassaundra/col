@@ -1,11 +1,11 @@
 use std::io::Read;
 
 use crate::interpreter::Interpreter;
-use crate::program::AdvancedProgramState;
+use crate::program::SimpleProgramState;
 
 fn get_output_with_input<R: Read>(source: &str, reader: &mut R) -> String {
 	let mut output = Vec::new();
-	Interpreter::<AdvancedProgramState>::new(source, Some(reader), Some(&mut output))
+	Interpreter::<SimpleProgramState>::new(source, Some(reader), Some(&mut output))
 		.run()
 		.unwrap();
 	return String::from_utf8_lossy(output.as_slice()).into_owned();
@@ -13,7 +13,7 @@ fn get_output_with_input<R: Read>(source: &str, reader: &mut R) -> String {
 
 fn get_output(source: &str) -> String {
 	let mut output = Vec::new();
-	Interpreter::<AdvancedProgramState>::new(source, None, Some(&mut output))
+	Interpreter::<SimpleProgramState>::new(source, None, Some(&mut output))
 		.run()
 		.unwrap();
 	return String::from_utf8_lossy(output.as_slice()).into_owned()

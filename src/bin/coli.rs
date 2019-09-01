@@ -4,7 +4,7 @@ use std::io::{stdout, stdin};
 use clap::{App, Arg, crate_version, crate_authors, value_t};
 
 use col::interpreter::{Interpreter};
-use col::program::{AdvancedProgramState};
+use col::program::SimpleProgramState;
 use std::error::Error;
 
 fn main() {
@@ -34,7 +34,7 @@ fn main() {
 	let mut stdout = stdout();
 	let mut stdin = stdin();
 
-	Interpreter::<AdvancedProgramState>::new(&program, Some(&mut stdin), Some(&mut stdout))
+	Interpreter::<SimpleProgramState>::new(&program, Some(&mut stdin), Some(&mut stdout))
 		.run_with_delay(delay)
 		.expect("An I/O error occurred");
 }

@@ -127,9 +127,8 @@ Ideally the max value would be greater than or equal to the number of columns, s
 **Fibonacci:**
 
 ```
->;
 11#>;
-A$0~v1~v0~:^+::1~^#
+A$2~v0~v2~:^+::0~^#
 ```
 
 **Quine:**
